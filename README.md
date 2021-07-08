@@ -6,6 +6,14 @@ AirGradient has a [DIY air sensor](https://www.airgradient.com/diy/). I built on
 
 So I built this.
 
+## How it Works
+
+If you're using the official AirGradient Arduino sketch (`C02_PM_SHT_OLED_WIFI`), you can configure it to enable WiFi and send data to a remote server every 9 seconds (as it cycles through the display of PM2.5, CO2, temperature, and humidity values).
+
+By default, it sends a small JSON payload to AirGradient's servers, and you can monitor the data via their service.
+
+But this exporter runs a Docker container that 'catches' that data (by pointing your AirGradient sensor at it), and then it reports it through a `/metrics` endpoint that Prometheus can scrape to ingest sensor data at whatever interval Prometheus is configured to scrape it.
+
 ## How to Use
 
 This thing is a couple PHP scripts that run in a Docker container. That's it.
