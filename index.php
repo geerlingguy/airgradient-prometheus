@@ -35,7 +35,7 @@ else {
 }
 
 // Prepare output directory.
-$sensors_dir = 'sensors';
+$sensors_dir = '/sensors';
 if (!is_dir($sensors_dir)) {
   mkdir($sensors_dir);
 }

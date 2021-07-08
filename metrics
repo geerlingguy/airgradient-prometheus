@@ -8,7 +8,7 @@
  * like to support multiple sensors in the future, maybe port-based.
  */
 
-$sensors_dir = 'sensors';
+$sensors_dir = '/sensors';
 $sensor_data = [];
 
 // Loop through all the json files in the sensors directory.

@@ -41,7 +41,7 @@ services:
   shelly-plug:
     container_name: airgradient
     image: php:8-apache
-    command: "/bin/bash -c 'chown -R 33:33 html; a2enmod rewrite; apache2-foreground'"
+    command: "/bin/bash -c 'mkdir /sensors; chown -R 33:33 /sensors; a2enmod rewrite; apache2-foreground'"
     ports:
       - "9925:80"
     volumes:
