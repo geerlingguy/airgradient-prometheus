@@ -30,7 +30,7 @@ if (empty($sensor_data)) {
 
 ?>
 # HELP instance The ID of the AirGradient sensor.
-instance <?php print $sensor_data['instance']; ?>
+# instance <?php print $sensor_data['instance']; ?>
 
 # HELP wifi Current WiFi signal strength, in dB
 # TYPE wifi gauge
