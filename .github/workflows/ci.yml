@@ -19,13 +19,14 @@ jobs:
 
       - name: Run Docker container.
         run: >
-          docker run -d -p 9924:80 --name airgradient \
+          docker run -d -p 9925:80 --name airgradient \
             -v "$PWD":/var/www/html \
-            php:8-apache
+            php:8-apache \
+            /bin/bash -c 'a2enmod rewrite; apache2-foreground'
 
       - name: Inspect Docker container.
         run: >
           sleep 3 && docker ps
 
       - name: Test that we're getting the expected result.
-        run: curl http://localhost:9925/metrics | grep "Could not resolve host"
+        run: curl http://localhost:9925/metrics | grep "No sensor data available."

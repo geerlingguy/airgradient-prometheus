@@ -9,6 +9,7 @@
  */
 
 $sensors_dir = 'sensors';
+$sensor_data = [];
 
 // Loop through all the json files in the sensors directory.
 foreach (glob($sensors_dir . '/' . '*.json') as $file) {
@@ -18,13 +19,13 @@ foreach (glob($sensors_dir . '/' . '*.json') as $file) {
 
   // Get the sensor data out of the file.
   $sensor_data = json_decode(file_get_contents($file), true);
+}
 
-  // Handle error condition.
-  if (empty($sensor_data)) {
-    print('No sensor data available.');
-    http_response_code(500);
-    return;
-  }
+// Handle error condition.
+if (empty($sensor_data)) {
+  print('No sensor data available.');
+  http_response_code(500);
+  return;
 }
 
 ?>

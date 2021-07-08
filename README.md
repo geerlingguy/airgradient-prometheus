@@ -74,6 +74,10 @@ rhum 38
 
 If you get an error, make sure the Docker container (and the host it's on) is able to be reached over HTTP!
 
+## Known issues
+
+This project currently only works with one AirGradient Sensor. See [this issue](https://github.com/geerlingguy/airgradient-prometheus/issues/1) for details on getting it working with more than one sensor.
+
 ## License
 
 MIT.
