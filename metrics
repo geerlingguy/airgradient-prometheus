@@ -1,0 +1,52 @@
+<?php
+
+/**
+ * This is terrible. But it is simple and works. So it shall be.
+ *
+ * TODO: This code currently only works for the last .json file in the sensors
+ * directory, meaning you can only ever work with one AirGradient sensor. I'd
+ * like to support multiple sensors in the future, maybe port-based.
+ */
+
+$sensors_dir = 'sensors';
+
+// Loop through all the json files in the sensors directory.
+foreach (glob($sensors_dir . '/' . '*.json') as $file) {
+  if ($file == '.' || $file == '..') {
+    continue;
+  }
+
+  // Get the sensor data out of the file.
+  $sensor_data = json_decode(file_get_contents($file), true);
+
+  // Handle error condition.
+  if (empty($sensor_data)) {
+    print('No sensor data available.');
+    http_response_code(500);
+    return;
+  }
+}
+
+?>
+# HELP instance The ID of the AirGradient sensor.
+instance <?php print $sensor_data['instance']; ?>
+
+# HELP wifi Current WiFi signal strength, in dB
+# TYPE wifi gauge
+wifi <?php print $sensor_data['wifi']; ?>
+
+# HELP pm02 Particulat Matter PM2.5 value
+# TYPE pm02 gauge
+pm02 <?php print $sensor_data['pm02']; ?>
+
+# HELP rc02 CO2 value, in ppm
+# TYPE rc02 gauge
+rco2 <?php print $sensor_data['rco2']; ?>
+
+# HELP atmp Temperature, in degrees Celsius
+# TYPE atmp gauge
+atmp <?php print $sensor_data['atmp']; ?>
+
+# HELP rhum Relative humidity, in percent
+# TYPE rhum gauge
+rhum <?php print $sensor_data['rhum']; ?>
