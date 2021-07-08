@@ -22,7 +22,7 @@ jobs:
           docker run -d -p 9925:80 --name airgradient \
             -v "$PWD":/var/www/html \
             php:8-apache \
-            /bin/bash -c 'a2enmod rewrite; apache2-foreground'
+            /bin/bash -c 'chown -R 33:33 html; a2enmod rewrite; apache2-foreground'
 
       - name: Inspect Docker container.
         run: >

@@ -28,7 +28,7 @@ Run the PHP script inside Docker like so:
 docker run -d -p 9925:80 --name airgradient \
   -v "$PWD":/var/www/html \
   php:8-apache \
-  /bin/bash -c 'a2enmod rewrite; apache2-foreground'
+  /bin/bash -c 'chown -R 33:33 html; a2enmod rewrite; apache2-foreground'
 ```
 
 Or you can set it up inside a docker-compose file like so:
@@ -41,7 +41,7 @@ services:
   shelly-plug:
     container_name: airgradient
     image: php:8-apache
-    command: "/bin/bash -c 'a2enmod rewrite; apache2-foreground'"
+    command: "/bin/bash -c 'chown -R 33:33 html; a2enmod rewrite; apache2-foreground'"
     ports:
       - "9925:80"
     volumes:
