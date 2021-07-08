@@ -41,6 +41,7 @@ services:
   shelly-plug:
     container_name: airgradient
     image: php:8-apache
+    command: "/bin/bash -c 'a2enmod rewrite; apache2-foreground'"
     ports:
       - "9925:80"
     volumes:
