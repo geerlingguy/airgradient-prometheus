@@ -14,6 +14,8 @@ By default, it sends a small JSON payload to AirGradient's servers, and you can 
 
 But this exporter runs a Docker container that 'catches' that data (by pointing your AirGradient sensor at it), and then it reports it through a `/metrics` endpoint that Prometheus can scrape to ingest sensor data at whatever interval Prometheus is configured to scrape it.
 
+I've included the sketch I deploy to my sensors for use with this repository: [AirGradient-DIY.ino](AirGradient-DIY.ino).
+
 ## How to Use
 
 This thing is a couple PHP scripts that run in a Docker container. That's it.
