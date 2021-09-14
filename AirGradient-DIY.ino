@@ -73,8 +73,8 @@ void setup() {
   server.onNotFound(HandleNotFound);
 
   server.begin();
-  Serial.println("HTTP server started at ip " + WiFi.localIP().toString() );
-  showTextRectangle("Listening To", WiFi.localIP().toString() ,true);
+  Serial.println("HTTP server started at ip " + WiFi.localIP().toString() + ":" + String(port));
+  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port),true);
 }
 
 void loop() {
