@@ -107,7 +107,7 @@ String GenerateMetrics() {
 
     message += "# HELP rc02 CO2 value, in ppm\n";
     message += "# TYPE rc02 gauge\n";
-    message += "pm02";
+    message += "rc02";
     message += "{";
     message += idString;
     message += "\"} ";
