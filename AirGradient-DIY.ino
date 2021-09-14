@@ -25,11 +25,11 @@ const bool hasSHT = true;
 const char* ssid = "PleaseChangeMe";
 const char* password = "PleaseChangeMe";
 
-const int8_t port = 9926;
+const int port = 9926;
 
 long lastUpdate;
 //The frequency of measurement updates
-const int8_t updateFrequency = 5000; 
+const int updateFrequency = 5000; 
 
 int counter = 0;
 
@@ -152,7 +152,7 @@ void HandleNotFound() {
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
+  for (uint i = 0; i < server.args(); i++) {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/html", message);
