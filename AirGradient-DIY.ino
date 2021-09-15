@@ -57,7 +57,7 @@ void setup() {
   Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    showTextRectangle("Trying,", "to connect...", true)
+    showTextRectangle("Trying,", "to connect...", true);
     Serial.print(".");
   }
 
