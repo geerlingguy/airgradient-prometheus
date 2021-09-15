@@ -88,7 +88,7 @@ void loop() {
 String GenerateMetrics() {
   String message = "";
 
-  String idString = "id=\"" + String(deviceId) + "\" ";
+  String idString = "{id=\"" + String(deviceId) + "\"} ";
 
   if (hasPM) {
     int stat = ag.getPM2_Raw();
@@ -96,9 +96,7 @@ String GenerateMetrics() {
     message += "# HELP pm02 Particulat Matter PM2.5 value\n";
     message += "# TYPE pm02 gauge\n";
     message += "pm02";
-    message += "{";
     message += idString;
-    message += "\"} ";
     message += String(stat);
     message += "\n";
   }
@@ -109,9 +107,7 @@ String GenerateMetrics() {
     message += "# HELP rc02 CO2 value, in ppm\n";
     message += "# TYPE rc02 gauge\n";
     message += "rc02";
-    message += "{";
     message += idString;
-    message += "\"} ";
     message += String(stat);
     message += "\n";
   }
@@ -122,18 +118,14 @@ String GenerateMetrics() {
     message += "# HELP atmp Temperature, in degrees Celsius\n";
     message += "# TYPE atmp gauge\n";
     message += "atmp";
-    message += "{";
     message += idString;
-    message += "\"} ";
     message += String(stat.t);
     message += "\n";
 
     message += "# HELP rhum Relative humidtily, in percent\n";
     message += "# TYPE rhum gauge\n";
     message += "rhum";
-    message += "{";
     message += idString;
-    message += "\"} ";
     message += String(stat.rh);
     message += "\n";
   }
@@ -204,8 +196,6 @@ void updateScreen(long now) {
     }
     counter++;
     if (counter > 3) counter = 0;
-
     lastUpdate = millis();
   }
-
 }
