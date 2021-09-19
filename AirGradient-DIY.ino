@@ -88,7 +88,7 @@ void loop() {
 String GenerateMetrics() {
   String message = "";
 
-  String idString = "{id=\"" + String(deviceId) + "\"} ";
+  String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
   if (hasPM) {
     int stat = ag.getPM2_Raw();
