@@ -1,0 +1,31 @@
+name: Arduino CI
+on: [push, pull_request]
+
+env:
+  ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+jobs:
+  test:
+    strategy:
+      matrix: 
+        arduino-platform: []
+        include:
+          - arduino-platform: ""
+            fqbn: ""
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install Platform
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.arduino-platform }}
+
+      - name: Compile Sketch
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./blink
