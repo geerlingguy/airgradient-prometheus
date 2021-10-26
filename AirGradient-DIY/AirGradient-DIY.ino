@@ -16,7 +16,7 @@ AirGradient ag = AirGradient();
 //
 // Config Start
 
-const char* deviceId = "AirGradient";
+const char* deviceId = ""; // optional
 
 const bool hasPM = true;
 const bool hasCO2 = true;
@@ -34,10 +34,8 @@ const int updateFrequency = 5000;
 int counter = 0;
 
 // Config End
-//
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
-//
 
 void setup() {
   Serial.begin(9600);
@@ -87,7 +85,6 @@ void loop() {
 
 String GenerateMetrics() {
   String message = "";
-
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
   if (hasPM) {
