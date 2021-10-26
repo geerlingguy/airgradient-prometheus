@@ -6,13 +6,6 @@ env:
 
 jobs:
   test:
-    strategy:
-      matrix: 
-        arduino-platform: []
-        include:
-          - arduino-platform: ""
-            fqbn: ""
-
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +18,15 @@ jobs:
       - name: Install Platform
         run: |
           arduino-cli core update-index
-          arduino-cli core install ${{ matrix.arduino-platform }}
+          arduino-cli core install esp8266:esp8266
+
+      - name: Install AirGradient Library
+        run: |
+          arduino-cli lib install "AirGradient Air Quality Sensor"
+
+      - name: Install SSD1306 Display Library
+        run: |
+          arduino-cli lib install "ESP8266 and ESP32 OLED driver for SSD1306 displays"
 
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./blink
+        run: arduino-cli compile --fqbn esp8266:esp8266:d1_mini ./AirGradient-DIY
