@@ -83,7 +83,7 @@ void loop() {
   updateScreen(t);
 }
 
-struct device_props {
+typedef struct device_props {
   String id;
   String mac;
 } device_props_t;
