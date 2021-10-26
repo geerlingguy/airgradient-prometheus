@@ -84,8 +84,8 @@ void loop() {
 }
 
 struct device_props {
-  String id,
-  String mac
+  String id;
+  String mac;
 } device_props_t;
 
 String GenerateDeviceProps(device_props_t* dp) {
