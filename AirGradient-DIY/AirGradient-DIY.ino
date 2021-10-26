@@ -83,24 +83,8 @@ void loop() {
   updateScreen(t);
 }
 
-typedef struct device_props {
-  String id;
-  String mac;
-} device_props_t;
-
-String GenerateDeviceProps(device_props_t* dp) {
-  resp = "{mac=\"" + String(dp->mac);
-  if (dp->id != null && dp->id != "") {
-    resp += "\",id=\"" + String(dp->id);
-  }
-  resp += "\"}"
-
-  return resp;
-}
-
 String GenerateMetrics() {
   String message = "";
-
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
   if (hasPM) {
