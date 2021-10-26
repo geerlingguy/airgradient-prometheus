@@ -15,7 +15,7 @@ jobs:
       - name: Install Arduino CLI
         uses: arduino/setup-arduino-cli@v1
 
-      - name: Install Platform
+      - name: Install ESP8266
         run: |
           arduino-cli core update-index
           arduino-cli core install esp8266:esp8266
