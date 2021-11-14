@@ -25,8 +25,8 @@ $ curl http://your-ip:9926/metrics
 # HELP pm02 Particulat Matter PM2.5 value
 # TYPE pm02 gauge
 pm02{id="Airgradient"} 6
-# HELP rc02 CO2 value, in ppm
-# TYPE rc02 gauge
+# HELP rco2 CO2 value, in ppm
+# TYPE rco2 gauge
 rco2{id="Airgradient"} 862
 # HELP atmp Temperature, in degrees Celsius
 # TYPE atmp gauge
