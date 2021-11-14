@@ -101,9 +101,9 @@ String GenerateMetrics() {
   if (hasCO2) {
     int stat = ag.getCO2_Raw();
 
-    message += "# HELP rc02 CO2 value, in ppm\n";
-    message += "# TYPE rc02 gauge\n";
-    message += "rc02";
+    message += "# HELP rco2 CO2 value, in ppm\n";
+    message += "# TYPE rco2 gauge\n";
+    message += "rco2";
     message += idString;
     message += String(stat);
     message += "\n";
