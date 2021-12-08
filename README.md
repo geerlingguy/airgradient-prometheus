@@ -1,4 +1,4 @@
-# AirGradient Prometheus Exporter
+# AirGradient - Prometheus WiFi Sketch
 
 [![CI](https://github.com/geerlingguy/airgradient-prometheus/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/geerlingguy/airgradient-prometheus/actions/workflows/ci.yml)
 

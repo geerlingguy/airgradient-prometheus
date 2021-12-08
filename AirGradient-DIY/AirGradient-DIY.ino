@@ -2,7 +2,6 @@
  * This is good enough if not better. It is simple and works. So it shall be.
  */
 
-// 
 #include <AirGradient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -13,32 +12,36 @@
 
 AirGradient ag = AirGradient();
 
-//
-// Config Start
+// Config Start ----------------------------------------------------------------
 
-const char* deviceId = ""; // optional
+// Optional.
+const char* deviceId = "";
 
+// Hardware options for AirGradient DIY sensor.
 const bool hasPM = true;
 const bool hasCO2 = true;
 const bool hasSHT = true;
 
+// WiFi and IP connection info.
 const char* ssid = "PleaseChangeMe";
 const char* password = "PleaseChangeMe";
+const int port = 9926;
 #define staticip //comment out this line to use DHCP instead
 #ifdef staticip
 IPAddress static_ip(192, 168, 0, 0);
 IPAddress gateway(192, 168, 0, 0);
 IPAddress subnet(255, 255, 255, 0);
 #endif
-const int port = 9926;
 
+// The frequency of measurement updates.
+const int updateFrequency = 5000;
+
+// For housekeeping.
 long lastUpdate;
-//The frequency of measurement updates
-const int updateFrequency = 5000; 
-
 int counter = 0;
 
-// Config End
+// Config End ------------------------------------------------------------------
+
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
 
@@ -54,13 +57,15 @@ void setup() {
   if (hasPM) ag.PMS_Init();
   if (hasCO2) ag.CO2_Init();
   if (hasSHT) ag.TMP_RH_Init(0x44);
+
+  // Set static IP address if configured.
   #ifdef staticip
-  //set static IP
   WiFi.config(static_ip,gateway,subnet);
   #endif
-  //set WiFi mode to client, apparently without this it may try to act an AP.
+
+  // Set WiFi mode to client (without this it may try to act as an AP).
   WiFi.mode(WIFI_STA);
-  // Setup and wait for wifi.
+  // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
   Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
@@ -143,6 +148,7 @@ String GenerateMetrics() {
 void HandleRoot() {
   server.send(200, "text/plain", GenerateMetrics() );
 }
+
 void HandleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
