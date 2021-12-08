@@ -24,7 +24,12 @@ const bool hasSHT = true;
 
 const char* ssid = "PleaseChangeMe";
 const char* password = "PleaseChangeMe";
-
+#define staticip //comment out this line to use DHCP instead
+#ifdef staticip
+IPAddress static_ip(192, 168, 0, 0);
+IPAddress gateway(192, 168, 0, 0);
+IPAddress subnet(255, 255, 255, 0);
+#endif
 const int port = 9926;
 
 long lastUpdate;
@@ -49,7 +54,12 @@ void setup() {
   if (hasPM) ag.PMS_Init();
   if (hasCO2) ag.CO2_Init();
   if (hasSHT) ag.TMP_RH_Init(0x44);
-
+  #ifdef staticip
+  //set static IP
+  WiFi.config(static_ip,gateway,subnet);
+  #endif
+  //set WiFi mode to client, apparently without this it may try to act an AP.
+  WiFi.mode(WIFI_STA);
   // Setup and wait for wifi.
   WiFi.begin(ssid, password);
   Serial.println("");
