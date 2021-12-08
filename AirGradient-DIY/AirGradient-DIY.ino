@@ -12,7 +12,7 @@
 
 AirGradient ag = AirGradient();
 
-// Config Start ----------------------------------------------------------------
+// Config ----------------------------------------------------------------------
 
 // Optional.
 const char* deviceId = "";
@@ -26,7 +26,9 @@ const bool hasSHT = true;
 const char* ssid = "PleaseChangeMe";
 const char* password = "PleaseChangeMe";
 const int port = 9926;
-#define staticip //comment out this line to use DHCP instead
+
+// Uncomment the line below to configure a static IP address.
+// #define staticip
 #ifdef staticip
 IPAddress static_ip(192, 168, 0, 0);
 IPAddress gateway(192, 168, 0, 0);
@@ -105,7 +107,7 @@ String GenerateMetrics() {
   if (hasPM) {
     int stat = ag.getPM2_Raw();
 
-    message += "# HELP pm02 Particulat Matter PM2.5 value\n";
+    message += "# HELP pm02 Particulate Matter PM2.5 value\n";
     message += "# TYPE pm02 gauge\n";
     message += "pm02";
     message += idString;

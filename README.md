@@ -12,17 +12,19 @@ If you're using the official AirGradient Arduino sketch (`C02_PM_SHT_OLED_WIFI`)
 
 By default, it sends a small JSON payload to AirGradient's servers, and you can monitor the data via their service.
 
-This sketch provides stats upon request to the prometheus server during scrapes. By changing the deviceId in this sketch, you can easily probe multiple each airgradient from prometheus.
+This sketch provides stats upon request to the prometheus server during scrapes. By changing the deviceId in this sketch, you can easily probe multiple AirGradient DIY sensors from Prometheus.
 
 ## How to Use
 
-1. Point prometheus to scrape this endpoint of the airgradient sensor at: `http://your-ip:9926/metrics`.
+First, edit the configuration options in the `Config` section of `AirGradient-DIY.ino` to match your desired settings.
 
-Upload the sketch to the AirGradient sensor, make sure you have it connected to your network, then you can test that the exporter has data available to it by running this `curl` command:
+Make sure you enter the SSID and password for your WiFi network in the relevant variables, otherwise the sensor won't connect to your network.
+
+Upload the sketch to the AirGradient sensor using Arduino IDE, make sure it connects to your network, then test connecting to it by running this `curl` command:
 
 ```sh
 $ curl http://your-ip:9926/metrics
-# HELP pm02 Particulat Matter PM2.5 value
+# HELP pm02 Particulate Matter PM2.5 value
 # TYPE pm02 gauge
 pm02{id="Airgradient"} 6
 # HELP rco2 CO2 value, in ppm
@@ -36,11 +38,23 @@ atmp{id="Airgradient"} 31.6
 rhum{id="Airgradient"} 38
 ```
 
+Once you've verified it's working, configure Prometheus to scrape the sensor's endpoint: `http://sensor-ip:9926/metrics`.
+
+Example Prometheus configuration:
+
+```yaml
+TODO.
+```
+
+### Static IP address
+
+You can configure a static IP address for the sensor by uncommenting the `#define staticip` line.
+
 ## License
 
 MIT.
 
-## Author
+## Authors
 
-[Jeff Geerling](https://www.jeffgeerling.com).
-[Jordan Jones](https://github.com/kashalls)
+  - [Jeff Geerling](https://www.jeffgeerling.com)
+  - [Jordan Jones](https://github.com/kashalls)
