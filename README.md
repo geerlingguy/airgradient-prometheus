@@ -25,7 +25,7 @@ Make sure you have the "AirGradient" library installed (in Arduino IDE, go to To
 Upload the sketch to the AirGradient sensor ([instructions here](https://www.jeffgeerling.com/blog/2021/airgradient-diy-air-quality-monitor-co2-pm25#flashing)) using Arduino IDE, make sure it connects to your network, then test connecting to it by running this `curl` command:
 
 ```sh
-$ curl http://your-ip:9926/metrics
+$ curl http://airgradient-ip-address:9926/metrics
 # HELP pm02 Particulate Matter PM2.5 value
 # TYPE pm02 gauge
 pm02{id="Airgradient"}6
@@ -42,15 +42,20 @@ rhum{id="Airgradient"}38
 
 Once you've verified it's working, configure Prometheus to scrape the sensor's endpoint: `http://sensor-ip:9926/metrics`.
 
-Example Prometheus configuration:
+Example job configuration in `prometheus.yml`:
 
 ```yaml
-TODO.
+scrape_configs:
+  - job_name: 'airgradient-bedroom'
+    metrics_path: /metrics
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['airgradient-ip-address:9926']
 ```
 
 ### Static IP address
 
-You can configure a static IP address for the sensor by uncommenting the `#define staticip` line.
+You can configure a static IP address for the sensor by uncommenting the `#define staticip` line and entering your own IP information in the following lines.
 
 ## License
 
