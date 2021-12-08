@@ -1,5 +1,6 @@
 /**
- * This is good enough if not better. It is simple and works. So it shall be.
+ * This sketch connects an AirGradient DIY sensor to a WiFi network, and runs a
+ * tiny HTTP server to serve air quality metrics to Prometheus.
  */
 
 #include <AirGradient.h>
@@ -72,7 +73,7 @@ void setup() {
   Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    showTextRectangle("Trying,", "to connect...", true);
+    showTextRectangle("Trying to", "connect...", true);
     Serial.print(".");
   }
 
@@ -199,13 +200,13 @@ void updateScreen(long now) {
       case 2:
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("ATMP", String(stat.t), false);
+          showTextRectangle("TMP", String(stat.t, 1) + "C", false);
         }
         break;
       case 3:
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("RHUM", String(stat.rh) + "%", false);
+          showTextRectangle("HUM", String(stat.rh) + "%", false);
         }
         break;
     }
