@@ -68,6 +68,11 @@ void setup() {
 
   // Set WiFi mode to client (without this it may try to act as an AP).
   WiFi.mode(WIFI_STA);
+  
+  // Configure Hostname
+  wifi_station_set_hostname(deviceId);
+  WiFi.setHostname(deviceId);
+  
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
   Serial.println("");
