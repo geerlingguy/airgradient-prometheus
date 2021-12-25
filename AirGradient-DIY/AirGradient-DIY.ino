@@ -70,8 +70,13 @@ void setup() {
   WiFi.mode(WIFI_STA);
   
   // Configure Hostname
-  wifi_station_set_hostname(deviceId);
-  WiFi.setHostname(deviceId);
+  if ((deviceId != NULL) && (deviceId[0] == '\0')) {
+    Serial.printf("No Device ID is Defined, Defaulting to board defaults");
+  }
+  else {
+    wifi_station_set_hostname(deviceId);
+    WiFi.setHostname(deviceId);
+  }
   
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
@@ -89,7 +94,8 @@ void setup() {
   Serial.println(WiFi.localIP());
   Serial.print("MAC address: ");
   Serial.println(WiFi.macAddress());
-
+  Serial.print("Hostname: ");
+  Serial.println(WiFi.hostname());
   server.on("/", HandleRoot);
   server.on("/metrics", HandleRoot);
   server.onNotFound(HandleNotFound);
