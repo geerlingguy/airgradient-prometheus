@@ -148,7 +148,7 @@ String GenerateMetrics() {
     message += String(stat.t);
     message += "\n";
 
-    message += "# HELP rhum Relative humidtily, in percent\n";
+    message += "# HELP rhum Relative humidity, in percent\n";
     message += "# TYPE rhum gauge\n";
     message += "rhum";
     message += idString;
