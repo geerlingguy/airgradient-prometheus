@@ -192,8 +192,13 @@ void showTextRectangle(String ln1, String ln2, boolean small) {
   } else {
     display.setFont(ArialMT_Plain_24);
   }
+  #ifdef FLIP_SCREEN
   display.drawString(32, 16, ln1);
   display.drawString(32, 36, ln2);
+  #else
+  display.drawString(32, 0, ln1);
+  display.drawString(32, 20, ln2);
+  #endif
   display.display();
 }
 
