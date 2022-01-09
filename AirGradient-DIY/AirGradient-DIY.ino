@@ -29,12 +29,15 @@ const char* password = "PleaseChangeMe";
 const int port = 9926;
 
 // Uncomment the line below to configure a static IP address.
-// #define staticip
-#ifdef staticip
-IPAddress static_ip(192, 168, 0, 0);
+// #define STATIC_IP
+#ifdef STATIC_IP
+IPAddress staticIp(192, 168, 0, 0);
 IPAddress gateway(192, 168, 0, 0);
 IPAddress subnet(255, 255, 255, 0);
 #endif
+
+// Uncomment to flip the display 180 degrees.
+//#define FLIP_SCREEN
 
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
@@ -53,7 +56,9 @@ void setup() {
 
   // Init Display.
   display.init();
+  #ifdef FLIP_SCREEN
   display.flipScreenVertically();
+  #endif
   showTextRectangle("Init", String(ESP.getChipId(),HEX),true);
 
   // Enable enabled sensors.
@@ -62,8 +67,8 @@ void setup() {
   if (hasSHT) ag.TMP_RH_Init(0x44);
 
   // Set static IP address if configured.
-  #ifdef staticip
-  WiFi.config(static_ip,gateway,subnet);
+  #ifdef STATIC_IP
+  WiFi.config(staticIp,gateway,subnet);
   #endif
 
   // Set WiFi mode to client (without this it may try to act as an AP).
