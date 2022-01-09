@@ -37,7 +37,7 @@ IPAddress subnet(255, 255, 255, 0);
 #endif
 
 // Uncomment to flip the display 180 degrees.
-//#define FLIP_SCREEN
+#define FLIP_SCREEN
 
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
