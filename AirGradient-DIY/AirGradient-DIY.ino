@@ -8,6 +8,8 @@
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 
+#include <Adafruit_BME280.h>
+
 #include <Wire.h>
 #include "SSD1306Wire.h"
 
@@ -21,7 +23,8 @@ const char* deviceId = "";
 // Hardware options for AirGradient DIY sensor.
 const bool hasPM = true;
 const bool hasCO2 = true;
-const bool hasSHT = true;
+const bool hasSHT = false;
+const bool hasBME = true;
 
 // WiFi and IP connection info.
 const char* ssid = "PleaseChangeMe";
@@ -51,6 +54,11 @@ int counter = 0;
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
 
+Adafruit_BME280 bme; // use I2C interface
+Adafruit_Sensor *bme_temp = bme.getTemperatureSensor();
+Adafruit_Sensor *bme_pressure = bme.getPressureSensor();
+Adafruit_Sensor *bme_humidity = bme.getHumiditySensor();
+
 void setup() {
   Serial.begin(9600);
 
@@ -65,6 +73,7 @@ void setup() {
   if (hasPM) ag.PMS_Init();
   if (hasCO2) ag.CO2_Init();
   if (hasSHT) ag.TMP_RH_Init(0x44);
+  if (hasBME) bme.begin();
 
   // Set static IP address if configured.
   #ifdef STATIC_IP
@@ -160,6 +169,34 @@ String GenerateMetrics() {
     message += String(stat.rh);
     message += "\n";
   }
+  
+if (hasBME) {
+    sensors_event_t temp_event, pressure_event, humidity_event;
+    bme_temp->getEvent(&temp_event);
+    bme_pressure->getEvent(&pressure_event);
+    bme_humidity->getEvent(&humidity_event);
+
+    message += "# HELP atmp Temperature, in degrees Celsius\n";
+    message += "# TYPE atmp gauge\n";
+    message += "atmp";
+    message += idString;
+    message += String(temp_event.temperature);
+    message += "\n";
+
+    message += "# HELP rhum Relative humidity, in percent\n";
+    message += "# TYPE rhum gauge\n";
+    message += "rhum";
+    message += idString;
+    message += String(humidity_event.relative_humidity);
+    message += "\n";
+
+    message += "# HELP apre Athmospherique pressure, in hPa\n";
+    message += "# TYPE apre gauge\n";
+    message += "apre";
+    message += idString;
+    message += String(pressure_event.pressure);
+    message += "\n";
+  }
 
   return message;
 }
@@ -209,7 +246,7 @@ void updateScreen(long now) {
       case 0:
         if (hasPM) {
           int stat = ag.getPM2_Raw();
-          showTextRectangle("PM2",String(stat),false);
+          showTextRectangle("Particules 2.5",String(stat), true);
         }
         break;
       case 1:
@@ -221,18 +258,35 @@ void updateScreen(long now) {
       case 2:
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+          showTextRectangle("Température", String(stat.t, 1) + "C", true);
+        }
+        if (hasBME) {
+          sensors_event_t temp_event;
+          bme_temp->getEvent(&temp_event);
+          showTextRectangle("Température", String(temp_event.temperature, 1) + "C", true);
         }
         break;
       case 3:
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("HUM", String(stat.rh) + "%", false);
+          showTextRectangle("Humidité", String(stat.rh) + "%", true);
+        }
+        if (hasBME) {
+          sensors_event_t humidity_event;
+          bme_humidity->getEvent(&humidity_event);
+          showTextRectangle("Humidité", String(humidity_event.relative_humidity, 1) + "%", true);
+        }
+        break;
+      case 4:
+        if (hasBME) {
+          sensors_event_t pressure_event;
+          bme_pressure->getEvent(&pressure_event);
+          showTextRectangle("Pression", String(pressure_event.pressure, 1) + "hPa", true);
         }
         break;
     }
     counter++;
-    if (counter > 3) counter = 0;
+    if (counter > 4) counter = 0;
     lastUpdate = millis();
   }
 }
