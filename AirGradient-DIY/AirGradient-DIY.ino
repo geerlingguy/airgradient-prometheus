@@ -8,8 +8,6 @@
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 
-#include <Adafruit_BME280.h>
-
 #include <Wire.h>
 #include "SSD1306Wire.h"
 
@@ -18,17 +16,16 @@ AirGradient ag = AirGradient();
 // Config ----------------------------------------------------------------------
 
 // Optional.
-const char* deviceId = "";
+const char *deviceId = "";
 
 // Hardware options for AirGradient DIY sensor.
 const bool hasPM = true;
 const bool hasCO2 = true;
 const bool hasSHT = false;
-const bool hasBME = true;
 
 // WiFi and IP connection info.
-const char* ssid = "PleaseChangeMe";
-const char* password = "PleaseChangeMe";
+const char *ssid = "PleaseChangeMe";
+const char *password = "PleaseChangeMe";
 const int port = 9926;
 
 // Uncomment the line below to configure a static IP address.
@@ -54,48 +51,50 @@ int counter = 0;
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
 
-Adafruit_BME280 bme; // use I2C interface
-Adafruit_Sensor *bme_temp = bme.getTemperatureSensor();
-Adafruit_Sensor *bme_pressure = bme.getPressureSensor();
-Adafruit_Sensor *bme_humidity = bme.getHumiditySensor();
-
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
   // Init Display.
   display.init();
-  #ifdef FLIP_SCREEN
+#ifdef FLIP_SCREEN
   display.flipScreenVertically();
-  #endif
-  showTextRectangle("Init", String(ESP.getChipId(),HEX),true);
+#endif
+
+  showTextRectangle("Init", String(ESP.getChipId(), HEX), true);
 
   // Enable enabled sensors.
-  if (hasPM) ag.PMS_Init();
-  if (hasCO2) ag.CO2_Init();
-  if (hasSHT) ag.TMP_RH_Init(0x44);
-  if (hasBME) bme.begin();
+  if (hasPM)
+    ag.PMS_Init();
+  if (hasCO2)
+    ag.CO2_Init();
+  if (hasSHT)
+    ag.TMP_RH_Init(0x44);
 
-  // Set static IP address if configured.
-  #ifdef STATIC_IP
-  WiFi.config(staticIp,gateway,subnet);
-  #endif
+// Set static IP address if configured.
+#ifdef STATIC_IP
+  WiFi.config(staticIp, gateway, subnet);
+#endif
 
   // Set WiFi mode to client (without this it may try to act as an AP).
   WiFi.mode(WIFI_STA);
-  
+
   // Configure Hostname
-  if ((deviceId != NULL) && (deviceId[0] == '\0')) {
+  if ((deviceId != NULL) && (deviceId[0] == '\0'))
+  {
     Serial.printf("No Device ID is Defined, Defaulting to board defaults");
   }
-  else {
+  else
+  {
     wifi_station_set_hostname(deviceId);
     WiFi.setHostname(deviceId);
   }
-  
+
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
   Serial.println("");
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     showTextRectangle("Trying to", "connect...", true);
     Serial.print(".");
@@ -116,21 +115,24 @@ void setup() {
 
   server.begin();
   Serial.println("HTTP server started at ip " + WiFi.localIP().toString() + ":" + String(port));
-  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port),true);
+  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port), true);
 }
 
-void loop() {
+void loop()
+{
   long t = millis();
 
   server.handleClient();
   updateScreen(t);
 }
 
-String GenerateMetrics() {
+String GenerateMetrics()
+{
   String message = "";
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
-  if (hasPM) {
+  if (hasPM)
+  {
     int stat = ag.getPM2_Raw();
 
     message += "# HELP pm02 Particulate Matter PM2.5 value\n";
@@ -141,7 +143,8 @@ String GenerateMetrics() {
     message += "\n";
   }
 
-  if (hasCO2) {
+  if (hasCO2)
+  {
     int stat = ag.getCO2_Raw();
 
     message += "# HELP rco2 CO2 value, in ppm\n";
@@ -152,7 +155,8 @@ String GenerateMetrics() {
     message += "\n";
   }
 
-  if (hasSHT) {
+  if (hasSHT)
+  {
     TMP_RH stat = ag.periodicFetchData();
 
     message += "# HELP atmp Temperature, in degrees Celsius\n";
@@ -169,43 +173,17 @@ String GenerateMetrics() {
     message += String(stat.rh);
     message += "\n";
   }
-  
-if (hasBME) {
-    sensors_event_t temp_event, pressure_event, humidity_event;
-    bme_temp->getEvent(&temp_event);
-    bme_pressure->getEvent(&pressure_event);
-    bme_humidity->getEvent(&humidity_event);
-
-    message += "# HELP atmp Temperature, in degrees Celsius\n";
-    message += "# TYPE atmp gauge\n";
-    message += "atmp";
-    message += idString;
-    message += String(temp_event.temperature);
-    message += "\n";
-
-    message += "# HELP rhum Relative humidity, in percent\n";
-    message += "# TYPE rhum gauge\n";
-    message += "rhum";
-    message += idString;
-    message += String(humidity_event.relative_humidity);
-    message += "\n";
-
-    message += "# HELP apre Athmospherique pressure, in hPa\n";
-    message += "# TYPE apre gauge\n";
-    message += "apre";
-    message += idString;
-    message += String(pressure_event.pressure);
-    message += "\n";
-  }
 
   return message;
 }
 
-void HandleRoot() {
-  server.send(200, "text/plain", GenerateMetrics() );
+void HandleRoot()
+{
+  server.send(200, "text/plain", GenerateMetrics());
 }
 
-void HandleNotFound() {
+void HandleNotFound()
+{
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -214,79 +192,75 @@ void HandleNotFound() {
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-  for (uint i = 0; i < server.args(); i++) {
+  for (uint i = 0; i < server.args(); i++)
+  {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/html", message);
 }
 
 // DISPLAY
-void showTextRectangle(String ln1, String ln2, boolean small) {
+void showTextRectangle(String ln1, String ln2, boolean small)
+{
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  if (small) {
+  if (small)
+  {
     display.setFont(ArialMT_Plain_16);
-  } else {
+  }
+  else
+  {
     display.setFont(ArialMT_Plain_24);
   }
-  #ifdef FLIP_SCREEN
+#ifdef FLIP_SCREEN
   display.drawString(32, 16, ln1);
   display.drawString(32, 36, ln2);
-  #else
+#else
   display.drawString(32, 0, ln1);
   display.drawString(32, 20, ln2);
-  #endif
+#endif
   display.display();
 }
 
-void updateScreen(long now) {
-  if ((now - lastUpdate) > updateFrequency) {
+void updateScreen(long now)
+{
+  if ((now - lastUpdate) > updateFrequency)
+  {
     // Take a measurement at a fixed interval.
-    switch (counter) {
-      case 0:
-        if (hasPM) {
-          int stat = ag.getPM2_Raw();
-          showTextRectangle("Particules 2.5",String(stat), true);
-        }
-        break;
-      case 1:
-        if (hasCO2) {
-          int stat = ag.getCO2_Raw();
-          showTextRectangle("CO2", String(stat), false);
-        }
-        break;
-      case 2:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("Température", String(stat.t, 1) + "C", true);
-        }
-        if (hasBME) {
-          sensors_event_t temp_event;
-          bme_temp->getEvent(&temp_event);
-          showTextRectangle("Température", String(temp_event.temperature, 1) + "C", true);
-        }
-        break;
-      case 3:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("Humidité", String(stat.rh) + "%", true);
-        }
-        if (hasBME) {
-          sensors_event_t humidity_event;
-          bme_humidity->getEvent(&humidity_event);
-          showTextRectangle("Humidité", String(humidity_event.relative_humidity, 1) + "%", true);
-        }
-        break;
-      case 4:
-        if (hasBME) {
-          sensors_event_t pressure_event;
-          bme_pressure->getEvent(&pressure_event);
-          showTextRectangle("Pression", String(pressure_event.pressure, 1) + "hPa", true);
-        }
-        break;
+    switch (counter)
+    {
+    case 0:
+      if (hasPM)
+      {
+        int stat = ag.getPM2_Raw();
+        showTextRectangle("PM2.5", String(stat), true);
+      }
+      break;
+    case 1:
+      if (hasCO2)
+      {
+        int stat = ag.getCO2_Raw();
+        showTextRectangle("CO2", String(stat), false);
+      }
+      break;
+    case 2:
+      if (hasSHT)
+      {
+        TMP_RH stat = ag.periodicFetchData();
+        showTextRectangle("TEMP", String(stat.t, 1) + "C", true);
+      }
+      break;
+    case 3:
+      if (hasSHT)
+      {
+        TMP_RH stat = ag.periodicFetchData();
+        showTextRectangle("HUM", String(stat.rh) + "%", true);
+      }
+      break;
     }
     counter++;
-    if (counter > 4) counter = 0;
+    if (counter > 4)
+      counter = 0;
     lastUpdate = millis();
   }
 }
