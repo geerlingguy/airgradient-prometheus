@@ -7,11 +7,13 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
+#include <SGP30.h>
 
 #include <Wire.h>
 #include "SSD1306Wire.h"
 
 AirGradient ag = AirGradient();
+SGP30 SGP;
 
 // Config ----------------------------------------------------------------------
 
@@ -22,6 +24,7 @@ const char* deviceId = "";
 const bool hasPM = true;
 const bool hasCO2 = true;
 const bool hasSHT = true;
+const bool hasTVOC = false; // Set true to use the SGP30 sensor
 
 // WiFi and IP connection info.
 const char* ssid = "PleaseChangeMe";
@@ -50,6 +53,7 @@ ESP8266WebServer server(port);
 
 void setup() {
   Serial.begin(9600);
+  // Serial.begin(115200);    // Setting serial to 115200 appears to be requiredd for SGP30
 
   // Init Display.
   display.init();
@@ -60,6 +64,7 @@ void setup() {
   if (hasPM) ag.PMS_Init();
   if (hasCO2) ag.CO2_Init();
   if (hasSHT) ag.TMP_RH_Init(0x44);
+  if (hasTVOC) SGP.begin();
 
   // Set static IP address if configured.
   #ifdef staticip
@@ -110,6 +115,11 @@ void loop() {
 
   server.handleClient();
   updateScreen(t);
+
+  // For SGP30
+  if (hasTVOC) {
+    SGP.measure(true);      // returns false if no measurement is made 
+  }
 }
 
 String GenerateMetrics() {
@@ -156,6 +166,41 @@ String GenerateMetrics() {
     message += "\n";
   }
 
+  if (hasTVOC) {
+    int TVOCstat = SGP.getTVOC();
+    int eCO2stat = SGP.getCO2();
+    int H2stat = SGP.getH2();
+    int ETHstat = SGP.getEthanol();
+
+    message += "# HELP tvoc Total Volital Organic Compounds in ppb\n";
+    message += "# TYPE tvoc gauge\n";
+    message += "tvoc";
+    message += idString;
+    message += String(TVOCstat);
+    message += "\n";
+
+    message += "# HELP eco2 Equivalent co2 concentration in ppm\n";
+    message += "# TYPE eco2 gauge\n";
+    message += "eco2";
+    message += idString;
+    message += String(eCO2stat);
+    message += "\n";
+
+    message += "# HELP h2 Molecular Hydrogen\n";
+    message += "# TYPE h2 gauge\n";
+    message += "h2";
+    message += idString;
+    message += String(H2stat);
+    message += "\n";
+
+    message += "# HELP eth Ethanol\n";
+    message += "# TYPE eth gauge\n";
+    message += "tvoc";
+    message += idString;
+    message += String(ETHstat);
+    message += "\n";
+  }
+
   return message;
 }
 
@@ -199,7 +244,7 @@ void updateScreen(long now) {
       case 0:
         if (hasPM) {
           int stat = ag.getPM2_Raw();
-          showTextRectangle("PM2",String(stat),false);
+          showTextRectangle("PM2", String(stat), false);
         }
         break;
       case 1:
@@ -220,9 +265,33 @@ void updateScreen(long now) {
           showTextRectangle("HUM", String(stat.rh) + "%", false);
         }
         break;
+      case 4:
+        if (hasTVOC) {
+          int stat = SGP.getTVOC();
+          showTextRectangle("TVOC", String(stat), false);
+        }
+        break;
+      case 5:
+        if (hasTVOC) {
+          int stat = SGP.getCO2();
+          showTextRectangle("ECO2", String(stat), false);
+        }
+        break;
+      case 6:
+        if (hasTVOC) {
+          int stat = SGP.getH2();
+          showTextRectangle("H2", String(stat), false);
+        }
+        break;
+      case 7:
+        if (hasTVOC) {
+          int stat = SGP.getEthanol();
+          showTextRectangle("ETH", String(stat), false);
+        }
+        break;
     }
     counter++;
-    if (counter > 3) counter = 0;
+    if (counter > 7) counter = 0;
     lastUpdate = millis();
   }
 }
