@@ -195,7 +195,7 @@ String GenerateMetrics() {
 
     message += "# HELP eth Ethanol\n";
     message += "# TYPE eth gauge\n";
-    message += "tvoc";
+    message += "eth";
     message += idString;
     message += String(ETHstat);
     message += "\n";
