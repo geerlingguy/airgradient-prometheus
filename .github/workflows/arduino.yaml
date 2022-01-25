@@ -28,5 +28,9 @@ jobs:
         run: |
           arduino-cli lib install "ESP8266 and ESP32 OLED driver for SSD1306 displays"
 
+      - name: Install SGP30 Sensor Library
+        run: |
+          arduino-cli lib install "SGP30"
+
       - name: Compile Sketch
         run: arduino-cli compile --fqbn esp8266:esp8266:d1_mini ./AirGradient-DIY
