@@ -19,7 +19,7 @@ AirGradient ag = AirGradient();
 const char* deviceId = "";
 
 // set to true to switch display from Celcius to Fahrenheit
-boolean inF = true;
+boolean inF = false;
 
 // Hardware options for AirGradient DIY sensor.
 const bool hasPM = true;
