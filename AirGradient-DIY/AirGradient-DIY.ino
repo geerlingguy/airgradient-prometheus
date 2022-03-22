@@ -18,6 +18,9 @@ AirGradient ag = AirGradient();
 // Optional.
 const char* deviceId = "";
 
+// set to 'F' to switch display from Celcius to Fahrenheit
+char temp_display = 'C';
+
 // Hardware options for AirGradient DIY sensor.
 const bool hasPM = true;
 const bool hasCO2 = true;
@@ -211,7 +214,11 @@ void updateScreen(long now) {
       case 2:
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+          if (temp_display == 'F' || temp_display == 'f') {
+            showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
+          } else {
+            showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+          }
         }
         break;
       case 3:
