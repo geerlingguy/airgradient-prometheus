@@ -1,5 +1,7 @@
 # AirGradient - Prometheus WiFi Sketch
 
+[![Arduino CI](https://github.com/geerlingguy/airgradient-prometheus/actions/workflows/arduino.yaml/badge.svg)](https://github.com/geerlingguy/airgradient-prometheus/actions/workflows/arduino.yaml)
+
 AirGradient has a [DIY air sensor](https://www.airgradient.com/diy/). I built one (actually, more than one). I want to integrate sensor data into my in-home Prometheus instance and graph the data in Grafana.
 
 So I built this.
