@@ -1,4 +1,4 @@
-/**
+/*
  * This sketch connects an AirGradient DIY sensor to a WiFi network, and runs a
  * tiny HTTP server to serve air quality metrics to Prometheus.
  */
@@ -16,7 +16,7 @@
 const char* deviceId = "";
 
 // set to 'F' to switch display from Celcius to Fahrenheit
-char temp_display = 'C';
+const char temp_display = 'C';
 
 // Hardware options for AirGradient DIY sensor.
 #define SET_PM
@@ -150,16 +150,18 @@ void update() {
 #ifdef SET_SHT
   value_sht = ag.periodicFetchData();
 #endif // SET_SHT
+
+#ifdef SET_DISPLAY
+  lastUpdate = millis();
+#endif
 }
 
 String GenerateMetrics() {
   String message = "";
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
+  // Update sensor data
   update();
-#ifdef SET_DISPLAY
-  lastUpdate = millis();
-#endif
 
 #ifdef SET_PM
   message += "# HELP pm02 Particulate Matter PM2.5 value\n";
@@ -239,7 +241,6 @@ void updateScreen(long now) {
   if ((now - lastUpdate) > updateFrequency) {
     // Take a measurement at a fixed interval.
     update();
-    lastUpdate = millis();
   }
   
   switch (state) {
