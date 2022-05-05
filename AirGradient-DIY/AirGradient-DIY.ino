@@ -7,11 +7,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
-
 #include <Wire.h>
 #include "SSD1306Wire.h"
-
-AirGradient ag = AirGradient();
 
 // Config ----------------------------------------------------------------------
 
@@ -50,6 +47,12 @@ int counter = 0;
 #endif // SET_DISPLAY
 
 // Config End ------------------------------------------------------------------
+
+AirGradient ag = AirGradient();
+
+TMP_RH value_sht;
+int value_pm;
+int value_co2;
 
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
@@ -132,54 +135,61 @@ void loop() {
 #endif // SET_DISPLAY
 }
 
+void update() {
+#ifdef SET_PM
+  value_pm  = ag.getPM2_Raw();
+#endif // SET_PM
+
+#ifdef SET_CO2
+  value_co2 = ag.getCO2_Raw();
+#endif // SET_CO2
+
+#ifdef SET_SHT
+  value_sht = ag.periodicFetchData();
+#endif // SET_SHT
+}
+
 String GenerateMetrics() {
   String message = "";
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
-#ifdef SET_PM
-  {
-    int stat = ag.getPM2_Raw();
+  update();
+#ifdef SET_DISPLAY
+  lastUpdate = millis();
+#endif
 
-    message += "# HELP pm02 Particulate Matter PM2.5 value\n";
-    message += "# TYPE pm02 gauge\n";
-    message += "pm02";
-    message += idString;
-    message += String(stat);
-    message += "\n";
-  }
+#ifdef SET_PM
+  message += "# HELP pm02 Particulate Matter PM2.5 value\n";
+  message += "# TYPE pm02 gauge\n";
+  message += "pm02";
+  message += idString;
+  message += String(value_pm);
+  message += "\n";
 #endif // SET_PM
 
 #ifdef SET_CO2
-  {
-    int stat = ag.getCO2_Raw();
-
-    message += "# HELP rco2 CO2 value, in ppm\n";
-    message += "# TYPE rco2 gauge\n";
-    message += "rco2";
-    message += idString;
-    message += String(stat);
-    message += "\n";
-  }
+  message += "# HELP rco2 CO2 value, in ppm\n";
+  message += "# TYPE rco2 gauge\n";
+  message += "rco2";
+  message += idString;
+  message += String(value_co2);
+  message += "\n";
 #endif // SET_CO2
 
 #ifdef SET_SHT
-  {
-    TMP_RH stat = ag.periodicFetchData();
+  message += "# HELP atmp Temperature, in degrees Celsius\n";
+  message += "# TYPE atmp gauge\n";
+  message += "atmp";
+  message += idString;
+  message += String(value_sht.t);
+  message += "\n";
 
-    message += "# HELP atmp Temperature, in degrees Celsius\n";
-    message += "# TYPE atmp gauge\n";
-    message += "atmp";
-    message += idString;
-    message += String(stat.t);
-    message += "\n";
-
-    message += "# HELP rhum Relative humidity, in percent\n";
-    message += "# TYPE rhum gauge\n";
-    message += "rhum";
-    message += idString;
-    message += String(stat.rh);
-    message += "\n";
-  }
+  message += "# HELP rhum Relative humidity, in percent\n";
+  message += "# TYPE rhum gauge\n";
+  message += "rhum";
+  message += idString;
+  message += String(value_sht.rh);
+  message += "\n";
 #endif // SET_SHT
 
   return message;
