@@ -37,13 +37,10 @@ IPAddress gateway(192, 168, 0, 0);
 IPAddress subnet(255, 255, 255, 0);
 #endif
 
+#ifdef SET_DISPLAY
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
-
-#ifdef SET_DISPLAY
-// For housekeeping.
-long lastUpdate;
-int counter = 0;
+const int displayTime = 5000;
 #endif // SET_DISPLAY
 
 // Config End ------------------------------------------------------------------
@@ -53,6 +50,10 @@ AirGradient ag = AirGradient();
 TMP_RH value_sht;
 int value_pm;
 int value_co2;
+
+#ifdef SET_DISPLAY
+long lastUpdate = 0;
+#endif // SET_DISPLAY
 
 SSD1306Wire display(0x3c, SDA, SCL);
 ESP8266WebServer server(port);
@@ -127,11 +128,9 @@ void setup() {
 }
 
 void loop() {
-  long t = millis();
-
   server.handleClient();
 #ifdef SET_DISPLAY
-  updateScreen(t);
+  updateScreen(millis());
 #endif // SET_DISPLAY
 }
 
@@ -230,49 +229,48 @@ void showTextRectangle(String ln1, String ln2, boolean small) {
 }
 
 void updateScreen(long now) {
+  static long lastDisplayUpdate = millis();
+  static uint8_t state = 0;
+
   if ((now - lastUpdate) > updateFrequency) {
     // Take a measurement at a fixed interval.
-    switch (counter) {
-      case 0:
-#ifdef SET_PM
-        {
-          int stat = ag.getPM2_Raw();
-          showTextRectangle("PM2",String(stat),false);
-        }
-#endif // SET_PM
-        break;
-      case 1:
-#ifdef SET_CO2
-        {
-          int stat = ag.getCO2_Raw();
-          showTextRectangle("CO2", String(stat), false);
-        }
-#endif // SET_CO2
-        break;
-      case 2:
-#ifdef SET_SHT
-        {
-          TMP_RH stat = ag.periodicFetchData();
-          if (temp_display == 'F' || temp_display == 'f') {
-            showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
-          } else {
-            showTextRectangle("TMP", String(stat.t, 1) + "C", false);
-          }
-        }
-#endif // SET_SHT
-        break;
-      case 3:
-#ifdef SET_SHT
-        {
-          TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("HUM", String(stat.rh) + "%", false);
-        }
-#endif // SET_SHT
-        break;
-    }
-    counter++;
-    if (counter > 3) counter = 0;
+    update();
     lastUpdate = millis();
+  }
+  
+  switch (state) {
+    case 0:
+#ifdef SET_PM
+      showTextRectangle("PM2", String(value_pm), false);
+      break;
+#else
+      state = 1;
+#endif // SET_PM
+    case 1:
+#ifdef SET_CO2
+      showTextRectangle("CO2", String(value_co2), false);
+      break;
+#else
+      state = 2;
+#endif // SET_CO2
+    case 2:
+#ifdef SET_SHT
+      if (temp_display == 'F' || temp_display == 'f') {
+        showTextRectangle("TMP", String((value_sht.t * 9 / 5) + 32, 1) + "F", false);
+      } else {
+        showTextRectangle("TMP", String(value_sht.t, 1) + "C", false);
+      }
+      break;
+    case 3:
+      showTextRectangle("HUM", String(value_sht.rh) + "%", false);
+#else
+      state = 1;
+#endif // SET_SHT
+      break;
+  }
+  if ((now - lastDisplayUpdate) > displayTime) {
+    state = (state + 1) % 4;
+    lastDisplayUpdate = millis();
   }
 }
 #endif // SET_DISPLAY
