@@ -22,9 +22,10 @@ const char* deviceId = "";
 char temp_display = 'C';
 
 // Hardware options for AirGradient DIY sensor.
-const bool hasPM = true;
-const bool hasCO2 = true;
-const bool hasSHT = true;
+#define SET_PM
+#define SET_CO2
+#define SET_SHT
+#define SET_DISPLAY
 
 // WiFi and IP connection info.
 const char* ssid = "PleaseChangeMe";
@@ -42,9 +43,11 @@ IPAddress subnet(255, 255, 255, 0);
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
 
+#ifdef SET_DISPLAY
 // For housekeeping.
 long lastUpdate;
 int counter = 0;
+#endif // SET_DISPLAY
 
 // Config End ------------------------------------------------------------------
 
@@ -54,15 +57,23 @@ ESP8266WebServer server(port);
 void setup() {
   Serial.begin(9600);
 
+#ifdef SET_DISPLAY
   // Init Display.
   display.init();
   display.flipScreenVertically();
   showTextRectangle("Init", String(ESP.getChipId(),HEX),true);
+#endif // SET_DISPLAY
 
   // Enable enabled sensors.
-  if (hasPM) ag.PMS_Init();
-  if (hasCO2) ag.CO2_Init();
-  if (hasSHT) ag.TMP_RH_Init(0x44);
+#ifdef SET_PM
+  ag.PMS_Init();
+#endif // SET_PM
+#ifdef SET_CO2
+  ag.CO2_Init();
+#endif // SET_CO2
+#ifdef SET_SHT
+  ag.TMP_RH_Init(0x44);
+#endif // SET_SHT
 
   // Set static IP address if configured.
   #ifdef staticip
@@ -86,7 +97,9 @@ void setup() {
   Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
+#ifdef SET_DISPLAY
     showTextRectangle("Trying to", "connect...", true);
+#endif // SET_DISPLAY
     Serial.print(".");
   }
 
@@ -105,21 +118,26 @@ void setup() {
 
   server.begin();
   Serial.println("HTTP server started at ip " + WiFi.localIP().toString() + ":" + String(port));
-  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port),true);
+#ifdef SET_DISPLAY
+  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port), true);
+#endif // SET_DISPLAY
 }
 
 void loop() {
   long t = millis();
 
   server.handleClient();
+#ifdef SET_DISPLAY
   updateScreen(t);
+#endif // SET_DISPLAY
 }
 
 String GenerateMetrics() {
   String message = "";
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
-  if (hasPM) {
+#ifdef SET_PM
+  {
     int stat = ag.getPM2_Raw();
 
     message += "# HELP pm02 Particulate Matter PM2.5 value\n";
@@ -129,8 +147,10 @@ String GenerateMetrics() {
     message += String(stat);
     message += "\n";
   }
+#endif // SET_PM
 
-  if (hasCO2) {
+#ifdef SET_CO2
+  {
     int stat = ag.getCO2_Raw();
 
     message += "# HELP rco2 CO2 value, in ppm\n";
@@ -140,8 +160,10 @@ String GenerateMetrics() {
     message += String(stat);
     message += "\n";
   }
+#endif // SET_CO2
 
-  if (hasSHT) {
+#ifdef SET_SHT
+  {
     TMP_RH stat = ag.periodicFetchData();
 
     message += "# HELP atmp Temperature, in degrees Celsius\n";
@@ -158,6 +180,7 @@ String GenerateMetrics() {
     message += String(stat.rh);
     message += "\n";
   }
+#endif // SET_SHT
 
   return message;
 }
@@ -182,6 +205,7 @@ void HandleNotFound() {
 }
 
 // DISPLAY
+#ifdef SET_DISPLAY
 void showTextRectangle(String ln1, String ln2, boolean small) {
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -200,19 +224,24 @@ void updateScreen(long now) {
     // Take a measurement at a fixed interval.
     switch (counter) {
       case 0:
-        if (hasPM) {
+#ifdef SET_PM
+        {
           int stat = ag.getPM2_Raw();
           showTextRectangle("PM2",String(stat),false);
         }
+#endif // SET_PM
         break;
       case 1:
-        if (hasCO2) {
+#ifdef SET_CO2
+        {
           int stat = ag.getCO2_Raw();
           showTextRectangle("CO2", String(stat), false);
         }
+#endif // SET_CO2
         break;
       case 2:
-        if (hasSHT) {
+#ifdef SET_SHT
+        {
           TMP_RH stat = ag.periodicFetchData();
           if (temp_display == 'F' || temp_display == 'f') {
             showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
@@ -220,12 +249,15 @@ void updateScreen(long now) {
             showTextRectangle("TMP", String(stat.t, 1) + "C", false);
           }
         }
+#endif // SET_SHT
         break;
       case 3:
-        if (hasSHT) {
+#ifdef SET_SHT
+        {
           TMP_RH stat = ag.periodicFetchData();
           showTextRectangle("HUM", String(stat.rh) + "%", false);
         }
+#endif // SET_SHT
         break;
     }
     counter++;
@@ -233,3 +265,4 @@ void updateScreen(long now) {
     lastUpdate = millis();
   }
 }
+#endif // SET_DISPLAY
