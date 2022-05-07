@@ -45,6 +45,10 @@ const int displayTime = 5000;
 
 // Config End ------------------------------------------------------------------
 
+#define ERROR_PMS 0x01
+#define ERROR_SHT 0x02
+#define ERROR_CO2 0x04
+
 AirGradient ag = AirGradient();
 
 TMP_RH value_sht;
@@ -133,27 +137,42 @@ void loop() {
 #endif // SET_DISPLAY
 }
 
-void update() {
-  int value = 0;
+uint8_t update() {
+  uint8_t result = 0;
 #ifdef SET_PM
-  value = ag.getPM2_Raw();
-  if(value)
-    value_pm = value;
+  {
+    int value = ag.getPM2_Raw();
+    if(value)
+      value_pm = value;
+    else
+      result += ERROR_PMS;
+  }
 #endif // SET_PM
 
 #ifdef SET_CO2
-  value = ag.getCO2_Raw();
-  if(value)
-    value_co2 = value;
+  {
+    int value = ag.getCO2_Raw();
+    if(value > 0)
+      value_co2 = value;
+    else
+      result += ERROR_CO2;
+  }
 #endif // SET_CO2
 
 #ifdef SET_SHT
-  value_sht = ag.periodicFetchData();
+  {
+    TMP_RH value = ag.periodicFetchData();
+    if(value.t != NULL && value.rh != NULL)
+      value_sht = value;
+    else
+      result += ERROR_SHT;
+  }
 #endif // SET_SHT
 
 #ifdef SET_DISPLAY
   lastUpdate = millis();
 #endif
+  return result;
 }
 
 String GenerateMetrics() {
@@ -161,40 +180,47 @@ String GenerateMetrics() {
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
 
   // Update sensor data
-  update();
+  uint8_t error = update();
 
 #ifdef SET_PM
-  message += "# HELP pm02 Particulate Matter PM2.5 value\n";
-  message += "# TYPE pm02 gauge\n";
-  message += "pm02";
-  message += idString;
-  message += String(value_pm);
-  message += "\n";
+  if(!(error & ERROR_PMS))
+  {
+    message += "# HELP pm02 Particulate Matter PM2.5 value\n";
+    message += "# TYPE pm02 gauge\n";
+    message += "pm02";
+    message += idString;
+    message += String(value_pm);
+    message += "\n"; 
+  }
 #endif // SET_PM
 
 #ifdef SET_CO2
-  message += "# HELP rco2 CO2 value, in ppm\n";
-  message += "# TYPE rco2 gauge\n";
-  message += "rco2";
-  message += idString;
-  message += String(value_co2);
-  message += "\n";
+  if(!(error & ERROR_CO2))
+  {
+    message += "# HELP rco2 CO2 value, in ppm\n";
+    message += "# TYPE rco2 gauge\n";
+    message += "rco2";
+    message += idString;
+    message += String(value_co2);
+    message += "\n";
+  }
 #endif // SET_CO2
 
 #ifdef SET_SHT
-  message += "# HELP atmp Temperature, in degrees Celsius\n";
-  message += "# TYPE atmp gauge\n";
-  message += "atmp";
-  message += idString;
-  message += String(value_sht.t);
-  message += "\n";
-
-  message += "# HELP rhum Relative humidity, in percent\n";
-  message += "# TYPE rhum gauge\n";
-  message += "rhum";
-  message += idString;
-  message += String(value_sht.rh);
-  message += "\n";
+  if(!(error & ERROR_SHT))
+  {
+    message += "# HELP atmp Temperature, in degrees Celsius\n";
+    message += "# TYPE atmp gauge\n";
+    message += "atmp";
+    message += idString;
+    message += String(value_sht.t);
+    message += "\n# HELP rhum Relative humidity, in percent\n";
+    message += "# TYPE rhum gauge\n";
+    message += "rhum";
+    message += idString;
+    message += String(value_sht.rh);
+    message += "\n";
+  }
 #endif // SET_SHT
 
   return message;
