@@ -42,9 +42,9 @@ IPAddress subnet(255, 255, 255, 0);
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
 
-// For housekeeping.
+// Screen state.
 long lastUpdate;
-int counter = 0;
+int lastDisplay;
 
 // Config End ------------------------------------------------------------------
 
@@ -195,40 +195,42 @@ void showTextRectangle(String ln1, String ln2, boolean small) {
 }
 
 void updateScreen(long now) {
-  if ((now - lastUpdate) > updateFrequency) {
-    // Take a measurement at a fixed interval.
-    switch (counter) {
-      case 0:
-        if (hasPM) {
-          int stat = ag.getPM2_Raw();
-          showTextRectangle("PM2", String(stat), false);
-        }
-        break;
-      case 1:
-        if (hasCO2) {
-          int stat = ag.getCO2_Raw();
-          showTextRectangle("CO2", String(stat), false);
-        }
-        break;
-      case 2:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          if (temp_display == 'F' || temp_display == 'f') {
-            showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
-          } else {
-            showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+  if (now > (lastUpdate + updateFrequency)) {
+    for (int i = 4; i > 0; i--) {
+      // Take a measurement at a fixed interval.
+      switch (lastDisplay) {
+        case 0:
+          if (hasPM) {
+            int stat = ag.getPM2_Raw();
+            showTextRectangle("PM2", String(stat), false);
+            i = 0;
           }
-        }
-        break;
-      case 3:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("HUM", String(stat.rh) + "%", false);
-        }
-        break;
+          break;
+        case 1:
+          if (hasCO2) {
+            int stat = ag.getCO2_Raw();
+            showTextRectangle("CO2", String(stat), false);
+            i = 0;
+          }
+          break;
+        default:
+          if (hasSHT) {
+            TMP_RH stat = ag.periodicFetchData();
+            if (lastDisplay == 2) {
+              if (temp_display == 'F' || temp_display == 'f') {
+                showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
+              } else {
+                showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+              }
+            } else {
+              showTextRectangle("HUM", String(stat.rh) + "%", false);
+            }
+            i = 0;
+          }
+          break;
+      }
+      lastDisplay = (++lastDisplay) & 0x3;
     }
-    counter++;
-    if (counter > 3) counter = 0;
-    lastUpdate = millis();
+    lastUpdate = now;
   }
 }
