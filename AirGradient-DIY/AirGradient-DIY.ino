@@ -18,7 +18,7 @@ AirGradient ag = AirGradient();
 // Optional.
 const char* deviceId = "";
 
-// set to 'F' to switch display from Celcius to Fahrenheit
+// set to 'F' to switch display from Celsius to Fahrenheit
 char temp_display = 'C';
 
 // Hardware options for AirGradient DIY sensor.
@@ -42,9 +42,9 @@ IPAddress subnet(255, 255, 255, 0);
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
 
-// For housekeeping.
+// Screen state.
 long lastUpdate;
-int counter = 0;
+int lastDisplay;
 
 // Config End ------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ void setup() {
   // Init Display.
   display.init();
   display.flipScreenVertically();
-  showTextRectangle("Init", String(ESP.getChipId(),HEX),true);
+  showTextRectangle("Init", String(ESP.getChipId(), HEX), true);
 
   // Enable enabled sensors.
   if (hasPM) ag.PMS_Init();
@@ -65,22 +65,21 @@ void setup() {
   if (hasSHT) ag.TMP_RH_Init(0x44);
 
   // Set static IP address if configured.
-  #ifdef staticip
+#ifdef staticip
   WiFi.config(static_ip,gateway,subnet);
-  #endif
+#endif
 
   // Set WiFi mode to client (without this it may try to act as an AP).
   WiFi.mode(WIFI_STA);
-  
+
   // Configure Hostname
   if ((deviceId != NULL) && (deviceId[0] == '\0')) {
     Serial.printf("No Device ID is Defined, Defaulting to board defaults");
-  }
-  else {
+  } else {
     wifi_station_set_hostname(deviceId);
     WiFi.setHostname(deviceId);
   }
-  
+
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
   Serial.println("");
@@ -105,7 +104,7 @@ void setup() {
 
   server.begin();
   Serial.println("HTTP server started at ip " + WiFi.localIP().toString() + ":" + String(port));
-  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port),true);
+  showTextRectangle("Listening To", WiFi.localIP().toString() + ":" + String(port), true);
 }
 
 void loop() {
@@ -163,7 +162,7 @@ String GenerateMetrics() {
 }
 
 void HandleRoot() {
-  server.send(200, "text/plain", GenerateMetrics() );
+  server.send(200, "text/plain", GenerateMetrics());
 }
 
 void HandleNotFound() {
@@ -196,40 +195,42 @@ void showTextRectangle(String ln1, String ln2, boolean small) {
 }
 
 void updateScreen(long now) {
-  if ((now - lastUpdate) > updateFrequency) {
-    // Take a measurement at a fixed interval.
-    switch (counter) {
-      case 0:
-        if (hasPM) {
-          int stat = ag.getPM2_Raw();
-          showTextRectangle("PM2",String(stat),false);
-        }
-        break;
-      case 1:
-        if (hasCO2) {
-          int stat = ag.getCO2_Raw();
-          showTextRectangle("CO2", String(stat), false);
-        }
-        break;
-      case 2:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          if (temp_display == 'F' || temp_display == 'f') {
-            showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
-          } else {
-            showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+  if (now > (lastUpdate + updateFrequency)) {
+    for (int i = 4; i > 0; i--) {
+      // Take a measurement at a fixed interval.
+      switch (lastDisplay) {
+        case 0:
+          if (hasPM) {
+            int stat = ag.getPM2_Raw();
+            showTextRectangle("PM2", String(stat), false);
+            i = 0;
           }
-        }
-        break;
-      case 3:
-        if (hasSHT) {
-          TMP_RH stat = ag.periodicFetchData();
-          showTextRectangle("HUM", String(stat.rh) + "%", false);
-        }
-        break;
+          break;
+        case 1:
+          if (hasCO2) {
+            int stat = ag.getCO2_Raw();
+            showTextRectangle("CO2", String(stat), false);
+            i = 0;
+          }
+          break;
+        default:
+          if (hasSHT) {
+            TMP_RH stat = ag.periodicFetchData();
+            if (lastDisplay == 2) {
+              if (temp_display == 'F' || temp_display == 'f') {
+                showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
+              } else {
+                showTextRectangle("TMP", String(stat.t, 1) + "C", false);
+              }
+            } else {
+              showTextRectangle("HUM", String(stat.rh) + "%", false);
+            }
+            i = 0;
+          }
+          break;
+      }
+      lastDisplay = (++lastDisplay) & 0x3;
     }
-    counter++;
-    if (counter > 3) counter = 0;
-    lastUpdate = millis();
+    lastUpdate = now;
   }
 }
