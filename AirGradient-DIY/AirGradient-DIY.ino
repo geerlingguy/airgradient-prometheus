@@ -115,6 +115,17 @@ void loop() {
   updateScreen(t);
 }
 
+float convertF(float tempC, char tempMode) {
+  float temp = 0;
+  if (tempMode == 'F' || tempMode == 'f') {
+    temp = ((tempC * 9 / 5) + 32);
+  } else {
+    temp = tempC;
+  }
+  
+  return temp;
+}
+
 String GenerateMetrics() {
   String message = "";
   String idString = "{id=\"" + String(deviceId) + "\",mac=\"" + WiFi.macAddress().c_str() + "\"}";
@@ -143,12 +154,13 @@ String GenerateMetrics() {
 
   if (hasSHT) {
     TMP_RH stat = ag.periodicFetchData();
+    float temp = convertF(stat.t, temp_display);
 
-    message += "# HELP atmp Temperature, in degrees Celsius\n";
+    message += "# HELP atmp Temperature, in degrees C or F\n";
     message += "# TYPE atmp gauge\n";
     message += "atmp";
     message += idString;
-    message += String(stat.t);
+    message += String(temp);
     message += "\n";
 
     message += "# HELP rhum Relative humidity, in percent\n";
@@ -215,7 +227,7 @@ void updateScreen(long now) {
         if (hasSHT) {
           TMP_RH stat = ag.periodicFetchData();
           if (temp_display == 'F' || temp_display == 'f') {
-            showTextRectangle("TMP", String((stat.t * 9 / 5) + 32, 1) + "F", false);
+            showTextRectangle("TMP", String(convertF(stat.t, temp_display), 1) + "F", false);
           } else {
             showTextRectangle("TMP", String(stat.t, 1) + "C", false);
           }
