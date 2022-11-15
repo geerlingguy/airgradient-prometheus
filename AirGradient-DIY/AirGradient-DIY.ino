@@ -71,7 +71,7 @@ void setup() {
 
   // Set WiFi mode to client (without this it may try to act as an AP).
   WiFi.mode(WIFI_STA);
-  
+
   // Configure Hostname
   if ((deviceId != NULL) && (deviceId[0] == '\0')) {
     Serial.printf("No Device ID is Defined, Defaulting to board defaults");
@@ -80,7 +80,7 @@ void setup() {
     wifi_station_set_hostname(deviceId);
     WiFi.setHostname(deviceId);
   }
-  
+
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
   Serial.println("");

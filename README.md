@@ -12,50 +12,12 @@ If you're using the official AirGradient Arduino sketch (`C02_PM_SHT_OLED_WIFI`)
 
 By default, it sends a small JSON payload to AirGradient's servers, and you can monitor the data via their service.
 
-This sketch provides stats upon request to the prometheus server during scrapes. By changing the deviceId in this sketch, you can easily probe multiple AirGradient DIY sensors from Prometheus.
+This project configures the AirGradient sensor for local access (instead of delivering data to AirGradient's servers), and includes two configurations:
 
-## How to Use
+  1. [`AirGradient-DIY`](AirGradient-DIY/README.md): This is an Arduino sketch with all the code needed to set up an AirGradient sensor as a Prometheus endpoint on a WiFi network, suitable for scraping from any Prometheus instance (e.g. [geerlingguy/internet-pi](https://github.com/geerlingguy/internet-pi))
+  2. [`AirGradient-ESPHome`](AirGradient-ESPHome/README.md): This is an ESPHome configuration which integrates the AirGradient sensor with Home Assistant using ESPHome.
 
-First, edit the configuration options in the `Config` section of `AirGradient-DIY.ino` to match your desired settings.
-
-Make sure you enter the SSID and password for your WiFi network in the relevant variables, otherwise the sensor won't connect to your network.
-
-Make sure you have the "AirGradient" library installed (in Arduino IDE, go to Tools > Manage Libraries...).
-
-Upload the sketch to the AirGradient sensor ([instructions here](https://www.jeffgeerling.com/blog/2021/airgradient-diy-air-quality-monitor-co2-pm25#flashing)) using Arduino IDE, make sure it connects to your network, then test connecting to it by running this `curl` command:
-
-```sh
-$ curl http://airgradient-ip-address:9926/metrics
-# HELP pm02 Particulate Matter PM2.5 value
-# TYPE pm02 gauge
-pm02{id="Airgradient"}6
-# HELP rco2 CO2 value, in ppm
-# TYPE rco2 gauge
-rco2{id="Airgradient"}862
-# HELP atmp Temperature, in degrees Celsius
-# TYPE atmp gauge
-atmp{id="Airgradient"}31.6
-# HELP rhum Relative humidity, in percent
-# TYPE rhum gauge
-rhum{id="Airgradient"}38
-```
-
-Once you've verified it's working, configure Prometheus to scrape the sensor's endpoint: `http://sensor-ip:9926/metrics`.
-
-Example job configuration in `prometheus.yml`:
-
-```yaml
-scrape_configs:
-  - job_name: 'airgradient-bedroom'
-    metrics_path: /metrics
-    scrape_interval: 30s
-    static_configs:
-      - targets: ['airgradient-ip-address:9926']
-```
-
-### Static IP address
-
-You can configure a static IP address for the sensor by uncommenting the `#define staticip` line and entering your own IP information in the following lines.
+Please see the README file in the respective configuration folder for more information about how to set up your AirGradient sensor.
 
 ## License
 
@@ -65,3 +27,8 @@ MIT.
 
   - [Jeff Geerling](https://www.jeffgeerling.com)
   - [Jordan Jones](https://github.com/kashalls)
+
+ESPHome configuration adapted from code by:
+
+  - [Andrej Friesen](https://www.ajfriesen.com)
+  - [m-reiner](https://github.com/m-reiner)

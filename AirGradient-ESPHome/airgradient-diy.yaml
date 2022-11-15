@@ -1,0 +1,121 @@
+---
+# Adapted from: https://github.com/m-reiner/airgradient-esphome-prometheus
+esphome:
+  name: !secret name
+  platform: ESP8266
+  board: d1_mini
+
+logger:
+
+api:
+  password: !secret api_password
+
+ota:
+  password: !secret ota_password
+
+# See: https://community.home-assistant.io/t/esphome-flashing-over-wifi-does-not-work/357352
+switch:
+  - platform: safe_mode
+    name: "Flash Mode (Safe Mode)"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+# To use a static IP, uncomment this block of configuration:
+#  manual_ip:
+#    static_ip: PleaseChangeMe
+#    gateway: PleaseChangeMe
+#    subnet: 255.255.255.0
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+      id: esp_ip_address
+
+i2c:
+  sda: D2
+  scl: D1
+
+font:
+  - file: "gfonts://Arimo@Regular"
+    id: arimo9
+    size: 9
+  - file: "gfonts://Arimo@Regular"
+    id: arimo10
+    size: 10
+
+display:
+  - platform: ssd1306_i2c
+    id: oled
+    model: "SSD1306 64x48"
+    pages:
+      - id: page1
+        lambda: |-
+          it.printf(0, 0, id(arimo9), "%s", id(esp_ip_address).state.c_str());
+          it.printf(0, 9, id(arimo10), "CO2: %.0f", id(co2).state);
+          it.printf(0, 18, id(arimo10), "PM2.5: %.0f", id(pm25).state);
+          it.printf(0, 27, id(arimo10), "HUM: %.0f%%", id(humidity).state);
+          it.printf(0, 36, id(arimo10), "TEMP: %.0fC", id(temp).state);
+
+# Provide a /metrics endpoint for Prometheus
+prometheus:
+web_server:
+  port: 9926
+  version: 1
+
+# Set an interval to loop through the OLED screens.
+interval:
+  - interval: 5s
+    then:
+      - display.page.show_next: oled
+      - component.update: oled
+
+uart:
+  - rx_pin: D5
+    tx_pin: D6
+    baud_rate: 9600
+    id: uart1
+  - rx_pin: D4
+    tx_pin: D3
+    baud_rate: 9600
+    id: uart2
+
+sensor:
+  - platform: sht3xd
+    temperature:
+      id: temp
+      name: "Temperature"
+    humidity:
+      id: humidity
+      name: "Humidity"
+    address: 0x44
+    update_interval: 5s
+
+  - platform: pmsx003
+    # type can be PMSX003, PMS5003S, PMS5003T, PMS5003ST
+    # https://esphome.io/components/sensor/pmsx003.html
+    type: PMSX003
+    uart_id: uart1
+    pm_1_0:
+      id: pm10
+      name: "Particulate Matter <1.0µm Concentration"
+    pm_2_5:
+      id: pm25
+      name: "Particulate Matter <2.5µm Concentration"
+    update_interval: 60s
+    pm_10_0:
+      id: pm100
+      name: "Particulate Matter <10.0µm Concentration"
+# If you have a version of the PMS*003* sensor that supports formaldehyde, uncomment the below block
+#    formaldehyde:
+#      id: hcho
+#      name: "Formaldehyde (HCHO) concentration in µg per cubic meter"
+
+  - platform: senseair
+    uart_id: uart2
+    co2:
+      id: co2
+      name: "CO2 level"
+    update_interval: 60s
