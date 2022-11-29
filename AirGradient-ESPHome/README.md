@@ -18,9 +18,8 @@ api_password: airgradientjjg
 ota_password: airgradientjjg
 
 # Configure a WiFi network connection.
-wifi_ssid: geerling
-wifi_password: mineralocorticoids
-
+wifi_ssid: my-wifi-network
+wifi_password: my-wifi-password
 ```
 
 Then, install ESPHome:
