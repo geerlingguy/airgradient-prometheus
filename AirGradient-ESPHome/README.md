@@ -14,8 +14,8 @@ First, create a `secrets.yaml` file in this directory with the following content
 name: airgradient-office
 
 # Set passwords for HA API and OTA updates.
-api_password: airgradientjjg
-ota_password: airgradientjjg
+api_password: apipassword
+ota_password: otapassword
 
 # Configure a WiFi network connection.
 wifi_ssid: my-wifi-network
