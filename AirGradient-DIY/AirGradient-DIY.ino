@@ -176,7 +176,7 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
 #ifdef SET_DISPLAY
-    updateOLEDString("Trying to", "connect...", "");
+    updateOLEDString("Connecting to ", String(ssid), "");
 #endif  // SET_DISPLAY
     Serial.print(".");
   }
@@ -261,6 +261,7 @@ uint8_t update() {
     if (cond_NOx_count > 0) {
       error = sgp41.executeConditioning(compensationRh, compensationT, raw_voc);
       cond_NOx_count--;
+      Serial.println("Conditioning NOx, count: " + String(cond_NOx_count));
     } else {
       error = sgp41.measureRawSignals(compensationRh, compensationT, raw_voc, raw_nox);
     }
@@ -337,9 +338,19 @@ String GenerateMetrics() {
 #endif  // SET_SHT
 
 #ifdef SET_SGP
-  //TODO
-
-
+  if (!(error & ERROR_SHT)) {  //todo, handle errors for SGP41 as not in AG lib yet
+    message += "# HELP voc Volatile Organic Compounts, in parts per billion\n";
+    message += "# TYPE voc gauge\n";
+    message += "voc";
+    message += idString;
+    message += String(value_voc);
+    message += "\n# HELP nox Nitric Oxide, in parts per billion\n";
+    message += "# TYPE nox gauge\n";
+    message += "nox";
+    message += idString;
+    message += String(value_nox);
+    message += "\n";
+  }
 #endif  // SET_SGP
 
   return message;
@@ -366,27 +377,23 @@ void HandleNotFound() {
 
 // DISPLAY
 #ifdef SET_DISPLAY
+
 void updateOLED() {
-  if (millis() - lastUpdate >= updateFrequency) {
-    lastUpdate += updateFrequency;
-
-
-    String ln1 = "PM:" + String(value_pm) + " CO2:" + String(value_co2);
-    //  String ln2 = "AQI:" + String(PM_TO_AQI_US(pm25)) + " TVOC:" + String(TVOC);
-    String ln2 = "TVOC:" + String(value_voc) + " NOX:" + String(value_nox);
-    String ln3;
-    if (false) {  // in farenheit
-      ln3 = "F:" + String((value_sht.t * 9 / 5) + 32) + " H:" + String(value_sht.rh) + "%";
-    } else {
-      ln3 = "C:" + String(value_sht.t) + " H:" + String(value_sht.rh) + "%";
-    }
-    updateOLEDString(ln1, ln2, ln3);
+  String ln1 = "PM:" + String(value_pm) + " CO2:" + String(value_co2);
+  //  String ln2 = "AQI:" + String(PM_TO_AQI_US(pm25)) + " TVOC:" + String(TVOC);
+  String ln2 = "TVOC:" + String(value_voc) + " NOX:" + String(value_nox);
+  String ln3;
+  if (false) {  // in farenheit
+    ln3 = "F:" + String((value_sht.t * 9 / 5) + 32) + " H:" + String(value_sht.rh) + "%";
+  } else {
+    ln3 = "C:" + String(value_sht.t) + " H:" + String(value_sht.rh) + "%";
   }
+  updateOLEDString(ln1, ln2, ln3);
 }
 
 void updateOLEDString(String ln1, String ln2, String ln3) {
   char buf[9];
-  u8g2.firstPage(); // why twice?
+  u8g2.firstPage();  // why twice?
   u8g2.firstPage();
   do {
     u8g2.setFont(u8g2_font_t0_16_tf);
@@ -397,18 +404,8 @@ void updateOLEDString(String ln1, String ln2, String ln3) {
 }
 
 void updateScreen(long now) {
-  static long lastDisplayUpdate = millis();
-  static uint8_t state = 0;
-
-  if ((now - lastUpdate) > updateFrequency) {
-    // Take a measurement at a fixed interval.
-    update();
-  }
-
+  update();
   updateOLED();
-
-  if ((now - lastDisplayUpdate) > displayTime) {
-    lastDisplayUpdate = millis();
-  }
+  delay(5000);
 }
 #endif  // SET_DISPLAY
