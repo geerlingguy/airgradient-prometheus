@@ -57,7 +57,6 @@ IPAddress subnet(255, 255, 255, 0);
 #ifdef SET_DISPLAY
 // The frequency of measurement updates.
 const int updateFrequency = 5000;
-const int displayTime = 5000;
 #endif  // SET_DISPLAY
 
 // Config End ------------------------------------------------------------------
@@ -76,15 +75,15 @@ int prev_value_rh = -1;
 #endif
 
 #ifdef SET_PM
-int value_pm;
+int value_pm = -1;
 #endif
 
 #ifdef SET_CO2
-int value_co2;
+int value_co2 = -1;
 #endif
 
 #ifdef SET_SHT
-int value_voc = -1;
+int value_tvoc = -1;
 int value_nox = -1;
 #endif
 
@@ -105,15 +104,6 @@ void setup() {
   u8g2.begin();
   updateOLEDString("Init", String(ESP.getChipId(), HEX), "");
 #endif  // SET_DISPLAY
-
-
-  /*
-    Measured SGP41 S/N: 0x000004FDE0ED
-    Devices found:
-    I2C device found at address 0x3C ! == OLED
-    I2C device found at address 0x44 ! == SHT
-    I2C device found at address 0x59 ! == SGP41
-  */
 
   // Enable enabled sensors.
 #ifdef SET_PM
@@ -215,7 +205,7 @@ void setup() {
 void loop() {
   server.handleClient();
 #ifdef SET_DISPLAY
-  updateScreen(millis());
+  updateScreen();
 #endif  // SET_DISPLAY
 }
 
@@ -269,7 +259,7 @@ uint8_t update() {
   {
     uint16_t error;
     char errorMessage[256];
-    uint16_t raw_voc = -1;
+    uint16_t raw_tvoc = -1;
     uint16_t raw_nox = -1;
     uint16_t compensationT;
     uint16_t compensationRh;
@@ -289,13 +279,13 @@ uint8_t update() {
 
     // do conditioning for 10 cycles before reporting
     if (cond_NOx_count > 0) {
-      error = sgp41.executeConditioning(compensationRh, compensationT, raw_voc);
+      error = sgp41.executeConditioning(compensationRh, compensationT, raw_tvoc);
       cond_NOx_count--;
       if (verbose) {
         Serial.println("Conditioning NOx, count: " + String(cond_NOx_count));
       }
     } else {
-      error = sgp41.measureRawSignals(compensationRh, compensationT, raw_voc, raw_nox);
+      error = sgp41.measureRawSignals(compensationRh, compensationT, raw_tvoc, raw_nox);
     }
 
     if (error) {
@@ -303,11 +293,11 @@ uint8_t update() {
       Serial.println("TVOC error: " + String(errorMessage));
       result += ERROR_SGP;
     } else if (cond_NOx_count <= 0) {
-      value_voc = voc_algorithm.process(raw_voc);
+      value_tvoc = voc_algorithm.process(raw_tvoc);
       value_nox = nox_algorithm.process(raw_nox);
       if (verbose) {
-        Serial.print("raw_voc: " + String(raw_voc) + "\traw_nox: " + String(raw_nox));
-        Serial.println("Corrected voc: " + String(value_voc) + "\t nox: " + String(value_nox));
+        Serial.print("raw_tvoc: " + String(raw_tvoc) + "\traw_nox: " + String(raw_nox));
+        Serial.println("Corrected tvoc: " + String(value_tvoc) + "\t nox: " + String(value_nox));
       }
     }
   }
@@ -366,11 +356,11 @@ String GenerateMetrics() {
 
 #ifdef SET_SGP
   if (!(error & ERROR_SGP)) {
-    message += "# HELP voc Volatile Organic Compounts, in parts per billion\n";
-    message += "# TYPE voc gauge\n";
+    message += "# HELP tvoc Total Volatile Organic Compounts, in parts per billion\n";
+    message += "# TYPE tvoc gauge\n";
     message += "voc";
     message += idString;
-    message += String(value_voc);
+    message += String(value_tvoc);
     message += "\n# HELP nox Nitric Oxide, in parts per billion\n";
     message += "# TYPE nox gauge\n";
     message += "nox";
@@ -410,9 +400,9 @@ void updateOLED() {
 
   String ln2;
   if (useAQI) {
-    ln2 = "AQI:" + String(PM_TO_AQI_US(value_pm)) + " TVOC:" + String(value_voc);
+    ln2 = "AQI:" + String(PM_TO_AQI_US(value_pm)) + " TVOC:" + String(value_tvoc);
   } else {
-    ln2 = "TVOC:" + String(value_voc) + " NOX:" + String(value_nox);
+    ln2 = "TVOC:" + String(value_tvoc) + " NOX:" + String(value_nox);
   }
 
   String ln3;
@@ -436,10 +426,10 @@ void updateOLEDString(String ln1, String ln2, String ln3) {
   } while (u8g2.nextPage());
 }
 
-void updateScreen(long now) {
+void updateScreen() {
   update();
   updateOLED();
-  delay(5000);
+  delay(updateFrequency);
 }
 
 // Calculate PM2.5 US AQI (from DIY_PRO_SENSIRION_NOX AirGradient example)
