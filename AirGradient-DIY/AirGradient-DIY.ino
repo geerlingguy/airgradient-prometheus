@@ -8,20 +8,16 @@
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 #include <Wire.h>
-
-
 #include <U8g2lib.h>
-// #include "SSD1306Wire.h" // only for some displays?
-// #include "SH1106Wire.h"
 
-// SGP41
+// TODO; refactor when AirGradient library gets support for SGP41 (not supported 02/10/2023 @ v2.4.6)
 #include <SensirionI2CSgp41.h>
 #include <NOxGasIndexAlgorithm.h>
 #include <VOCGasIndexAlgorithm.h>
 SensirionI2CSgp41 sgp41;
 VOCGasIndexAlgorithm voc_algorithm;
 NOxGasIndexAlgorithm nox_algorithm;
-// time in seconds needed for NOx conditioning
+// sampling cycles needed for NOx conditioning
 int cond_NOx_count = 10;
 
 // Config ----------------------------------------------------------------------
@@ -29,8 +25,14 @@ int cond_NOx_count = 10;
 // Optional.
 const char* deviceId = "";
 
-// set to 'F' to switch display from Celcius to Fahrenheit
+// set to 'C' to use Celcius, Farenheit if set otherwise
 const char temp_display = 'C';
+
+// show AQI (Air Quality Index) instead of NOx
+const bool useAQI = false;
+
+// be verbose in serial printing for debugging of sensors
+const bool verbose = false;
 
 // Hardware options for AirGradient DIY sensor.
 #define SET_PM
@@ -46,7 +48,6 @@ const char* password = "PleaseChangeMe";
 const int port = 9926;
 
 // Uncomment the line below to configure a static IP address.
-// #define staticip
 #ifdef staticip
 IPAddress static_ip(192, 168, 0, 0);
 IPAddress gateway(192, 168, 0, 0);
@@ -64,12 +65,23 @@ const int displayTime = 5000;
 #define ERROR_PMS 0x01
 #define ERROR_SHT 0x02
 #define ERROR_CO2 0x04
+#define ERROR_SGP 0x04
 
 AirGradient ag = AirGradient();
 
+#ifdef SET_SHT
 TMP_RH value_sht;
+float prev_value_temp = -1;
+int prev_value_rh = -1;
+#endif
+
+#ifdef SET_PM
 int value_pm;
+#endif
+
+#ifdef SET_CO2
 int value_co2;
+#endif
 
 #ifdef SET_SHT
 int value_voc = -1;
@@ -121,7 +133,6 @@ void setup() {
 
   uint16_t error;
   char errorMessage[256];
-  Serial.println("Starting to read SGP41 S/N");
   error = sgp41.getSerialNumber(serialNumber, serialNumberSize);
 
   if (error) {
@@ -129,16 +140,18 @@ void setup() {
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
   } else {
-    Serial.print("SerialNumber:");
-    Serial.print("0x");
-    for (size_t i = 0; i < serialNumberSize; i++) {
-      uint16_t value = serialNumber[i];
-      Serial.print(value < 4096 ? "0" : "");
-      Serial.print(value < 256 ? "0" : "");
-      Serial.print(value < 16 ? "0" : "");
-      Serial.print(value, HEX);
+    if (verbose) {
+      Serial.print("SerialNumber:");
+      Serial.print("0x");
+      for (size_t i = 0; i < serialNumberSize; i++) {
+        uint16_t value = serialNumber[i];
+        Serial.print(value < 4096 ? "0" : "");
+        Serial.print(value < 256 ? "0" : "");
+        Serial.print(value < 16 ? "0" : "");
+        Serial.print(value, HEX);
+      }
+      Serial.println();
     }
-    Serial.println();
   }
 
   uint16_t testResult;
@@ -164,7 +177,7 @@ void setup() {
 
   // Configure Hostname
   if ((deviceId != NULL) && (deviceId[0] == '\0')) {
-    Serial.printf("No Device ID is Defined, Defaulting to board defaults");
+    Serial.println("No Device ID is Defined, Defaulting to board defaults");
   } else {
     wifi_station_set_hostname(deviceId);
     WiFi.setHostname(deviceId);
@@ -172,7 +185,6 @@ void setup() {
 
   // Setup and wait for WiFi.
   WiFi.begin(ssid, password);
-  Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
 #ifdef SET_DISPLAY
@@ -208,14 +220,15 @@ void loop() {
 }
 
 uint8_t update() {
-  Serial.println();
   uint8_t result = 0;
 #ifdef SET_PM
   {
     int value = ag.getPM2_Raw();
     if (value) {
       value_pm = value;
-      Serial.println("pm: " + String(value_pm));
+      if (verbose) {
+        Serial.println("pm: " + String(value_pm));
+      }
     } else {
       result += ERROR_PMS;
     }
@@ -227,7 +240,9 @@ uint8_t update() {
     int value = ag.getCO2_Raw();
     if (value > 0) {
       value_co2 = value;
-      Serial.println("co2: " + String(value_co2));
+      if (verbose) {
+        Serial.println("co2: " + String(value_co2));
+      }
     } else {
       result += ERROR_CO2;
     }
@@ -239,7 +254,11 @@ uint8_t update() {
     TMP_RH value = ag.periodicFetchData();
     if (value.t != NULL && value.rh != NULL) {
       value_sht = value;
-      Serial.println("t: " + String(value_sht.t) + "\t rh: " + String(value_sht.rh));
+      prev_value_temp = value.t;
+      prev_value_rh = value.rh;
+      if (verbose) {
+        Serial.println("t: " + String(value_sht.t) + "\t rh: " + String(value_sht.rh));
+      }
     } else {
       result += ERROR_SHT;
     }
@@ -252,36 +271,44 @@ uint8_t update() {
     char errorMessage[256];
     uint16_t raw_voc = -1;
     uint16_t raw_nox = -1;
-    uint16_t defaultCompenstaionRh = 0x8000;  // in ticks as defined by SGP41
-    uint16_t defaultCompenstaionT = 0x6666;   // in ticks as defined by SGP41
-    uint16_t compensationT = static_cast<uint16_t>((value_sht.t + 45) * 65535 / 175);
-    uint16_t compensationRh = static_cast<uint16_t>(value_sht.rh * 65535 / 100);
+    uint16_t compensationT;
+    uint16_t compensationRh;
+    uint16_t defaultCompensationT = 0x6666;
+    uint16_t defaultCompensationRh = 0x8000;
 
-    // do conditioning for 10s on boot
+    // do compensation on available metrics, falling back to default indoor compensation values
+    if (result & ERROR_SHT) {
+      if (prev_value_temp == -1 || prev_value_rh == -1) {
+        compensationT = defaultCompensationT;
+        compensationRh = defaultCompensationRh;
+      } else {
+        compensationT = static_cast<uint16_t>((value_sht.t + 45) * 65535 / 175);
+        compensationRh = static_cast<uint16_t>(value_sht.rh * 65535 / 100);
+      }
+    }
+
+    // do conditioning for 10 cycles before reporting
     if (cond_NOx_count > 0) {
       error = sgp41.executeConditioning(compensationRh, compensationT, raw_voc);
       cond_NOx_count--;
-      Serial.println("Conditioning NOx, count: " + String(cond_NOx_count));
+      if (verbose) {
+        Serial.println("Conditioning NOx, count: " + String(cond_NOx_count));
+      }
     } else {
       error = sgp41.measureRawSignals(compensationRh, compensationT, raw_voc, raw_nox);
     }
 
     if (error) {
-      Serial.print("TVOC error: ");
       errorToString(error, errorMessage, 256);
-      Serial.println(errorMessage);
-    } else {
-      Serial.print("raw_voc: ");
-      Serial.print(raw_voc);
-      Serial.print("\t");
-      Serial.print("raw_nox: ");
-      Serial.println(raw_nox);
-    }
-
-    if (!error && cond_NOx_count <= 0) {
+      Serial.println("TVOC error: " + String(errorMessage));
+      result += ERROR_SGP;
+    } else if (cond_NOx_count <= 0) {
       value_voc = voc_algorithm.process(raw_voc);
       value_nox = nox_algorithm.process(raw_nox);
-      Serial.println("Corrected voc: " + String(value_voc) + "\t nox: " + String(value_nox));
+      if (verbose) {
+        Serial.print("raw_voc: " + String(raw_voc) + "\traw_nox: " + String(raw_nox));
+        Serial.println("Corrected voc: " + String(value_voc) + "\t nox: " + String(value_nox));
+      }
     }
   }
 #endif  // SET_SGP
@@ -338,7 +365,7 @@ String GenerateMetrics() {
 #endif  // SET_SHT
 
 #ifdef SET_SGP
-  if (!(error & ERROR_SHT)) {  //todo, handle errors for SGP41 as not in AG lib yet
+  if (!(error & ERROR_SGP)) {
     message += "# HELP voc Volatile Organic Compounts, in parts per billion\n";
     message += "# TYPE voc gauge\n";
     message += "voc";
@@ -380,10 +407,16 @@ void HandleNotFound() {
 
 void updateOLED() {
   String ln1 = "PM:" + String(value_pm) + " CO2:" + String(value_co2);
-  //  String ln2 = "AQI:" + String(PM_TO_AQI_US(pm25)) + " TVOC:" + String(TVOC);
-  String ln2 = "TVOC:" + String(value_voc) + " NOX:" + String(value_nox);
+
+  String ln2;
+  if (useAQI) {
+    ln2 = "AQI:" + String(PM_TO_AQI_US(value_pm)) + " TVOC:" + String(value_voc);
+  } else {
+    ln2 = "TVOC:" + String(value_voc) + " NOX:" + String(value_nox);
+  }
+
   String ln3;
-  if (false) {  // in farenheit
+  if (temp_display != 'C') {
     ln3 = "F:" + String((value_sht.t * 9 / 5) + 32) + " H:" + String(value_sht.rh) + "%";
   } else {
     ln3 = "C:" + String(value_sht.t) + " H:" + String(value_sht.rh) + "%";
@@ -408,4 +441,17 @@ void updateScreen(long now) {
   updateOLED();
   delay(5000);
 }
+
+// Calculate PM2.5 US AQI (from DIY_PRO_SENSIRION_NOX AirGradient example)
+int PM_TO_AQI_US(int pm02) {
+  if (pm02 <= 12.0) return ((50 - 0) / (12.0 - .0) * (pm02 - .0) + 0);
+  else if (pm02 <= 35.4) return ((100 - 50) / (35.4 - 12.0) * (pm02 - 12.0) + 50);
+  else if (pm02 <= 55.4) return ((150 - 100) / (55.4 - 35.4) * (pm02 - 35.4) + 100);
+  else if (pm02 <= 150.4) return ((200 - 150) / (150.4 - 55.4) * (pm02 - 55.4) + 150);
+  else if (pm02 <= 250.4) return ((300 - 200) / (250.4 - 150.4) * (pm02 - 150.4) + 200);
+  else if (pm02 <= 350.4) return ((400 - 300) / (350.4 - 250.4) * (pm02 - 250.4) + 300);
+  else if (pm02 <= 500.4) return ((500 - 400) / (500.4 - 350.4) * (pm02 - 350.4) + 400);
+  else return 500;
+};
+
 #endif  // SET_DISPLAY
