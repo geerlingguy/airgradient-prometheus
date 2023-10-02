@@ -24,9 +24,10 @@ jobs:
         run: |
           arduino-cli lib install "AirGradient Air Quality Sensor"
 
-      - name: Install SSD1306 Display Library
+      - name: Install U8g2lib display library
         run: |
-          arduino-cli lib install "ESP8266 and ESP32 OLED driver for SSD1306 displays"
+          arduino-cli lib install "U8g2"
+          # https://github.com/olikraus/u8g2
 
       - name: Compile Sketch
         run: arduino-cli compile --fqbn esp8266:esp8266:d1_mini ./AirGradient-DIY
