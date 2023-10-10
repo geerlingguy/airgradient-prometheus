@@ -25,6 +25,9 @@ int cond_NOx_count = 10;
 // Optional.
 const char* deviceId = "";
 
+// flip display orientation along horisontal axis, for older PRO conversion kits
+const bool flipDisplay = false;
+
 // set to 'C' to use Celcius, Farenheit if set otherwise
 const char temp_display = 'C';
 
@@ -102,6 +105,9 @@ void setup() {
   // Init Display.
   u8g2.setBusClock(100000);
   u8g2.begin();
+  if (flipDisplay) {
+    u8g2.setFlipMode(1); 
+  }
   updateOLEDString("Init", String(ESP.getChipId(), HEX), "");
 #endif  // SET_DISPLAY
 
