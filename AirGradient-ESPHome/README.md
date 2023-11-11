@@ -38,6 +38,8 @@ esphome run airgradient-diy.yaml --device /dev/tty.usbserial-410
 
 This should compile, flash, and run the configuration, and leave the logged output in your console. When you're satisfied things are working correctly, you can press Ctrl+C to exit the logs, and your AirGradient will continue running. You can now place it wherever you'd like.
 
+If you have the [AirGradient DIY Pro kit](https://www.airgradient.com/open-airgradient/instructions/diy-pro/), you can use the `airgradient-diy-pro.yaml` configuration.
+
 > You can do this setup from within the ESPHome Dashboard inside Home Assistant, but that installation method is not described here.
 
 ### Static IP address
