@@ -4,6 +4,14 @@
 
 This configuration sets up all the AirGradient hardware as sensors which can be made available to Home Assistant, and also exposes a Prometheus endpoint.
 
+## Support Matrix
+
+| Device | Status |
+| --- | --- |
+| AirGradient DIY | Supported |
+| AirGradient DIY Pro | Supported |
+| AirGradient ONE | See [issue #39](https://github.com/geerlingguy/airgradient-prometheus/issues/39) |
+
 ## How to Use
 
 First, create a `secrets.yaml` file in this directory with the following contents:
@@ -13,8 +21,11 @@ First, create a `secrets.yaml` file in this directory with the following content
 # Provide a unique name for this AirGradient.
 name: airgradient-office
 
-# Set passwords for HA API and OTA updates.
-api_password: apipassword
+# Encryption key for HA API access.
+# Generate a random 32-bit key with `openssl rand -base64 32`
+api_encryption_key: PASTE_BASE64_KEY_HERE
+
+# Set password for OTA updates.
 ota_password: otapassword
 
 # Configure a WiFi network connection.
@@ -38,7 +49,7 @@ esphome run airgradient-diy.yaml --device /dev/tty.usbserial-410
 
 This should compile, flash, and run the configuration, and leave the logged output in your console. When you're satisfied things are working correctly, you can press Ctrl+C to exit the logs, and your AirGradient will continue running. You can now place it wherever you'd like.
 
-If you have the [AirGradient DIY Pro kit](https://www.airgradient.com/open-airgradient/instructions/diy-pro/), you can use the `airgradient-diy-pro.yaml` configuration.
+If you have the [AirGradient DIY Pro kit](https://www.airgradient.com/open-airgradient/instructions/diy-pro/), use the `airgradient-diy-pro.yaml` configuration.
 
 > You can do this setup from within the ESPHome Dashboard inside Home Assistant, but that installation method is not described here.
 

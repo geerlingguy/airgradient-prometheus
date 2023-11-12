@@ -8,7 +8,8 @@ esphome:
 logger:
 
 api:
-  password: !secret api_password
+  encryption:
+    key: !secret api_encryption_key
 
 ota:
   password: !secret ota_password
@@ -48,7 +49,6 @@ display:
   - platform: ssd1306_i2c
     id: oled
     model: "SH1106 128x64"
-    rotation: 180
     pages:
       - id: page1
         lambda: |-
