@@ -52,6 +52,8 @@ This should compile, flash, and run the configuration, and leave the logged outp
 If you have the [AirGradient DIY Pro kit](https://www.airgradient.com/open-airgradient/instructions/diy-pro/), use the `airgradient-diy-pro.yaml` configuration.
 
 > You can do this setup from within the ESPHome Dashboard inside Home Assistant, but that installation method is not described here.
+>
+> You can also upload new configurations and debug the device over WiFi once its online, instead of passing the `/dev/tty.*` device, just pass the IP address of the AirGradient.
 
 ### Static IP address
 
