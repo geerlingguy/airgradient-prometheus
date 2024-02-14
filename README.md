@@ -19,6 +19,9 @@ This project configures the AirGradient sensor for local access (instead of deli
 
 Please see the README file in the respective configuration folder for more information about how to set up your AirGradient sensor.
 
+## Contributing
+If you are adding a new library or bumping the version of an existing one, update the GitHub action [Arduino CI (`arduino.yaml`)](.github/workflows/arduino.yaml) accordingly.
+
 ## License
 
 MIT.
