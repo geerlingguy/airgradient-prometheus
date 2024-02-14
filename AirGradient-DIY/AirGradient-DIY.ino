@@ -129,7 +129,7 @@ void setup() {
 
   uint16_t error;
   char errorMessage[256];
-  error = sgp41.getSerialNumber(serialNumber, serialNumberSize);
+  error = sgp41.getSerialNumber(serialNumber);
 
   if (error) {
     Serial.print("Error trying to execute getSerialNumber(): ");
