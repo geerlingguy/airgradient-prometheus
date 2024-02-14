@@ -27,6 +27,7 @@ MIT.
 
   - [Jeff Geerling](https://www.jeffgeerling.com)
   - [Jordan Jones](https://github.com/kashalls)
+  - [Falke Carlsen](https://github.com/falkecarlsen)
 
 ESPHome configuration adapted from code by:
 
