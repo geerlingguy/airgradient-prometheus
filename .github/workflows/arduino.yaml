@@ -22,26 +22,26 @@ jobs:
 
       - name: Install AirGradient Library
         run: |
-          arduino-cli lib install "AirGradient Air Quality Sensor"
+          arduino-cli lib install "AirGradient Air Quality Sensor"@2.4.15
 
       - name: Install Sensirion Core
         run: |
-          arduino-cli lib install "Sensirion Core"
+          arduino-cli lib install "Sensirion Core"@0.6.0
           # https://github.com/Sensirion/arduino-core/
 
       - name: Install Sensirion I2C SGP41
         run: |
-          arduino-cli lib install "Sensirion I2C SGP41"
+          arduino-cli lib install "Sensirion I2C SGP41"@1.0.0
           # https://github.com/Sensirion/arduino-i2c-sgp41
 
       - name: Install Sensirion Gas Index Algorithm
         run: |
-          arduino-cli lib install "Sensirion Gas Index Algorithm"
+          arduino-cli lib install "Sensirion Gas Index Algorithm"@3.2.2
           # https://github.com/Sensirion/arduino-gas-index-algorithm 
 
       - name: Install U8g2lib display library
         run: |
-          arduino-cli lib install "U8g2"
+          arduino-cli lib install "U8g2"@2.34.22
           # https://github.com/olikraus/u8g2
 
       - name: Compile Sketch
