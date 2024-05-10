@@ -9,6 +9,7 @@
 #include <WiFiClient.h>
 #include <Wire.h>
 #include <U8g2lib.h>
+#include "SHTSensor.h"
 
 // TODO; refactor when AirGradient library gets support for SGP41 (not supported 02/10/2023 @ v2.4.6)
 #include <SensirionI2CSgp41.h>
@@ -45,6 +46,9 @@ const bool verbose = false;
 #define SET_DISPLAY
 #define staticip
 
+// SHT sensor accuracy.
+const SHTSensor::SHTAccuracy shtAccuracy = SHTSensor::SHT_ACCURACY_MEDIUM;
+
 // WiFi and IP connection info.
 const char* ssid = "PleaseChangeMe";
 const char* password = "PleaseChangeMe";
@@ -70,11 +74,11 @@ const int updateFrequency = 5000;
 #define ERROR_SGP 0x04
 
 AirGradient ag = AirGradient();
+SHTSensor sht;
 
 #ifdef SET_SHT
-TMP_RH value_sht;
-float prev_value_temp = -1;
-int prev_value_rh = -1;
+float value_temp = -1;
+int value_rh = -1;
 #endif
 
 #ifdef SET_PM
@@ -119,7 +123,8 @@ void setup() {
   ag.CO2_Init();
 #endif  // SET_CO2
 #ifdef SET_SHT
-  ag.TMP_RH_Init(0x44);
+  sht.init();
+  sht.setAccuracy(shtAccuracy);
 #endif  // SET_SHT
 #ifdef SET_SGP
   sgp41.begin(Wire);
@@ -247,13 +252,11 @@ uint8_t update() {
 
 #ifdef SET_SHT
   {
-    TMP_RH value = ag.periodicFetchData();
-    if (value.t != NULL && value.rh != NULL) {
-      value_sht = value;
-      prev_value_temp = value.t;
-      prev_value_rh = value.rh;
+    if (sht.readSample()) {
+      value_temp = sht.getTemperature();
+      value_rh = sht.getHumidity();
       if (verbose) {
-        Serial.println("t: " + String(value_sht.t) + "\t rh: " + String(value_sht.rh));
+        Serial.println("t: " + String(value_temp) + "\t rh: " + String(value_rh));
       }
     } else {
       result += ERROR_SHT;
@@ -274,12 +277,12 @@ uint8_t update() {
 
     // do compensation on available metrics, falling back to default indoor compensation values
     if (result & ERROR_SHT) {
-      if (prev_value_temp == -1 || prev_value_rh == -1) {
+      if (value_temp == -1 || value_rh == -1) {
         compensationT = defaultCompensationT;
         compensationRh = defaultCompensationRh;
       } else {
-        compensationT = static_cast<uint16_t>((value_sht.t + 45) * 65535 / 175);
-        compensationRh = static_cast<uint16_t>(value_sht.rh * 65535 / 100);
+        compensationT = static_cast<uint16_t>((value_temp + 45) * 65535 / 175);
+        compensationRh = static_cast<uint16_t>(value_rh * 65535 / 100);
       }
     }
 
@@ -350,12 +353,12 @@ String GenerateMetrics() {
     message += "# TYPE atmp gauge\n";
     message += "atmp";
     message += idString;
-    message += String(value_sht.t);
+    message += String(value_temp);
     message += "\n# HELP rhum Relative humidity, in percent\n";
     message += "# TYPE rhum gauge\n";
     message += "rhum";
     message += idString;
-    message += String(value_sht.rh);
+    message += String(value_rh);
     message += "\n";
   }
 #endif  // SET_SHT
@@ -413,9 +416,9 @@ void updateOLED() {
 
   String ln3;
   if (temp_display != 'C') {
-    ln3 = "F:" + String((value_sht.t * 9 / 5) + 32) + " H:" + String(value_sht.rh) + "%";
+    ln3 = "F:" + String((value_temp * 9 / 5) + 32) + " H:" + String(value_rh) + "%";
   } else {
-    ln3 = "C:" + String(value_sht.t) + " H:" + String(value_sht.rh) + "%";
+    ln3 = "C:" + String(value_temp) + " H:" + String(value_rh) + "%";
   }
   updateOLEDString(ln1, ln2, ln3);
 }
