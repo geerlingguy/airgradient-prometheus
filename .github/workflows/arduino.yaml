@@ -44,5 +44,10 @@ jobs:
           arduino-cli lib install "U8g2"@2.34.22
           # https://github.com/olikraus/u8g2
 
+      - name: Install Arduino SHT library
+        run: |
+          arduino-cli lib install "arduino-sht"@1.2.5
+          # https://github.com/Sensirion/arduino-sht
+
       - name: Compile Sketch
         run: arduino-cli compile --fqbn esp8266:esp8266:d1_mini ./AirGradient-DIY
