@@ -12,7 +12,8 @@ api:
     key: !secret api_encryption_key
 
 ota:
-  password: !secret ota_password
+ - platform: esphome
+   password: !secret ota_password
 
 # See: https://community.home-assistant.io/t/esphome-flashing-over-wifi-does-not-work/357352
 switch:
