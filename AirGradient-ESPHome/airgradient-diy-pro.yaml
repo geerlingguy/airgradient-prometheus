@@ -2,7 +2,8 @@
 # Adapted from: https://github.com/m-reiner/airgradient-esphome-prometheus
 esphome:
   name: !secret name
-  platform: ESP8266
+
+esp8266:
   board: d1_mini
 
 logger:
