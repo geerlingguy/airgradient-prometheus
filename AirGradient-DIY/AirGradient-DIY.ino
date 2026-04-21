@@ -220,7 +220,7 @@ uint8_t update() {
 #ifdef SET_PM
   {
     int value = ag.getPM2_Raw();
-    if (value) {
+    if (value >= 0) {
       value_pm = value;
       if (verbose) {
         Serial.println("pm: " + String(value_pm));
@@ -234,7 +234,7 @@ uint8_t update() {
 #ifdef SET_CO2
   {
     int value = ag.getCO2_Raw();
-    if (value > 0) {
+    if (value >= 0) {
       value_co2 = value;
       if (verbose) {
         Serial.println("co2: " + String(value_co2));
